@@ -272,8 +272,12 @@ public final class PnMarketPlugin extends JavaPlugin {
 
     public void prepareJoinNotifications(Player player) {
         if (player == null) return;
-        notificationOfflineSince.put(player.getUniqueId(),
-                player.hasPlayedBefore() ? player.getLastSeen() : -1L);
+        // PlayerLoginEvent runs before the joining Player's saved data is loaded.
+        // Read the persisted profile while the player is still offline instead.
+        UUID playerId = player.getUniqueId();
+        OfflinePlayer savedPlayer = getServer().getOfflinePlayer(playerId);
+        notificationOfflineSince.put(playerId,
+                savedPlayer.hasPlayedBefore() ? savedPlayer.getLastSeen() : -1L);
     }
 
     public void notifyOnJoin(Player player) {

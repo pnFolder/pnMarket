@@ -271,7 +271,15 @@ storage:
 
 ## Сборка
 
+Для этой версии нужен соседний клон `pnFolder/pnLibrary` на коммите
+`6053231cffd72fec870b72d6410b18f141741f51`: он подключается через `includeBuild('../pnLibrary')`.
+Текущая ветка `main` pnLibrary содержит другой API обновлений и несовместима с pnMarket 1.0.5.
+Используйте JDK 17–22 для запуска Gradle 8.8; готовый плагин рассчитан на Java 17+.
+
 ```powershell
+git clone https://github.com/pnFolder/pnLibrary.git ../pnLibrary
+git -C ../pnLibrary checkout 6053231cffd72fec870b72d6410b18f141741f51
+./gradlew.bat --no-daemon test
 ./gradlew.bat --no-daemon shadowJar
 ```
 
