@@ -3,7 +3,7 @@ name: Release Build
 on:
   push:
     branches:
-      - feature/chat-favorites
+      - hotfix/v1.1.1
       - main
 
 permissions:
@@ -15,6 +15,129 @@ jobs:
     steps:
       - name: Checkout pnMarket
         uses: actions/checkout@v4
+
+      - name: Patch GUI decoration render order
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/main/java/ru/privatenull/gui/MarketGuiController.java')
+          text = path.read_text()
+          changed = False
+
+          if 'private void applyConfiguredDecorations(Inventory inventory)' not in text:
+              anchor = '''    private void animateRedraw(Player player, Inventory inventory) {
+                  guiAnimations.cancel(player);
+                  guiAnimations.open(player, inventory, false, plugin.guiAnimationProfile(),
+                          plugin.guiTransitionOrigin(player));
+              }
+          '''
+              replacement = anchor + '''
+              private void applyConfiguredDecorations(Inventory inventory) {
+                  if (inventory == null) return;
+                  Object holder = inventory.getHolder();
+                  String view = null;
+                  if (holder instanceof AuctionView) view = "auction";
+                  else if (holder instanceof PurchaseView) view = "purchase";
+                  else if (holder instanceof SellerView) view = "seller";
+                  else if (holder instanceof MyItemsView) view = "my-items";
+                  else if (holder instanceof BundlePreviewView) view = "bundle-preview";
+                  else if (holder instanceof BundleCreateView) view = "bundle-create";
+                  else if (holder instanceof FavoritesView) view = "favorites";
+                  else if (holder instanceof NotificationCatalogView) view = "notification-catalog";
+                  if (view != null) gui.applyDecorations(inventory, view);
+              }
+          '''
+              if anchor not in text:
+                  raise SystemExit('animateRedraw anchor not found')
+              text = text.replace(anchor, replacement, 1)
+              changed = True
+
+          auction_anchor = '''        for (int slot : layout.orangeDecor()) {
+                  setSlot(inv, slot, orange);
+              }
+
+              if (isSearch) {
+          '''
+          auction_replacement = '''        for (int slot : layout.orangeDecor()) {
+                  setSlot(inv, slot, orange);
+              }
+              applyConfiguredDecorations(inv);
+
+              if (isSearch) {
+          '''
+          if 'applyConfiguredDecorations(inv);\n\n        if (isSearch)' not in text:
+              if auction_anchor not in text:
+                  raise SystemExit('decorateAuction anchor not found')
+              text = text.replace(auction_anchor, auction_replacement, 1)
+              changed = True
+
+          purchase_anchor = '''        for (int slot : PURCHASE_ORANGE_SLOTS) {
+                  setSlot(inv, slot, orange);
+              }
+          }
+
+              private void updateQuantityItems'''
+          purchase_replacement = '''        for (int slot : PURCHASE_ORANGE_SLOTS) {
+                  setSlot(inv, slot, orange);
+              }
+              applyConfiguredDecorations(inv);
+          }
+
+              private void updateQuantityItems'''
+          if purchase_anchor in text:
+              text = text.replace(purchase_anchor, purchase_replacement, 1)
+              changed = True
+          elif 'applyConfiguredDecorations(inv);\n    }\n\n    private void updateQuantityItems' not in text:
+              raise SystemExit('decoratePurchase anchor not found')
+
+          preview_anchor = '''        for (int slot : AUCTION_BLACK_SLOTS) setSlot(inventory, slot, black);
+              for (int slot : AUCTION_ORANGE_SLOTS) setSlot(inventory, slot, orange);
+          }
+
+              void handleBundlePreviewClick'''
+          preview_replacement = '''        for (int slot : AUCTION_BLACK_SLOTS) setSlot(inventory, slot, black);
+              for (int slot : AUCTION_ORANGE_SLOTS) setSlot(inventory, slot, orange);
+              applyConfiguredDecorations(inventory);
+          }
+
+              void handleBundlePreviewClick'''
+          if preview_anchor in text:
+              text = text.replace(preview_anchor, preview_replacement, 1)
+              changed = True
+          elif 'applyConfiguredDecorations(inventory);\n    }\n\n    void handleBundlePreviewClick' not in text:
+              raise SystemExit('decorateBundlePreview anchor not found')
+
+          bundle_create_anchor = '''        ItemStack black = createIcon(Material.BLACK_STAINED_GLASS_PANE, " ");
+              for (int slot = 36; slot < 54; slot++) setSlot(view.inventory, slot, black);
+              int index = 0;
+          '''
+          bundle_create_replacement = '''        ItemStack black = createIcon(Material.BLACK_STAINED_GLASS_PANE, " ");
+              for (int slot = 36; slot < 54; slot++) setSlot(view.inventory, slot, black);
+              applyConfiguredDecorations(view.inventory);
+              int index = 0;
+          '''
+          if 'applyConfiguredDecorations(view.inventory);\n        int index = 0;' not in text:
+              if bundle_create_anchor not in text:
+                  raise SystemExit('bundle-create anchor not found')
+              text = text.replace(bundle_create_anchor, bundle_create_replacement, 1)
+              changed = True
+
+          if changed:
+              path.write_text(text)
+          PY
+
+      - name: Persist GUI render fix
+        run: |
+          if git diff --quiet -- src/main/java/ru/privatenull/gui/MarketGuiController.java; then
+            echo "GUI render fix already committed."
+          else
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add src/main/java/ru/privatenull/gui/MarketGuiController.java
+            git commit -m "fix: render decorations before GUI opens"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
 
       - name: Checkout pnLibrary
         run: git clone --depth=1 https://github.com/pnFolder/pnLibrary.git ../pnLibrary
@@ -33,13 +156,13 @@ jobs:
         run: ./gradlew clean build
 
       - name: Prepare release artifact
-        run: cp build/libs/pnMarket-1.1.0.jar pnMarket-1.1.0-paper-mc1.16.5-java17.jar
+        run: cp build/libs/pnMarket-1.1.1.jar pnMarket-1.1.1-paper-mc1.16.5-java17.jar
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pnMarket-1.1.0-paper-mc1.16.5-java17
-          path: pnMarket-1.1.0-paper-mc1.16.5-java17.jar
+          name: pnMarket-1.1.1-paper-mc1.16.5-java17
+          path: pnMarket-1.1.1-paper-mc1.16.5-java17.jar
           if-no-files-found: error
 
       - name: Publish GitHub Release
@@ -47,13 +170,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view v1.1.0 >/dev/null 2>&1; then
-            echo "Release v1.1.0 already exists; skipping publication."
+          if gh release view v1.1.1 >/dev/null 2>&1; then
+            echo "Release v1.1.1 already exists; skipping publication."
             exit 0
           fi
-          gh release create v1.1.0 \
-            pnMarket-1.1.0-paper-mc1.16.5-java17.jar \
+          gh release create v1.1.1 \
+            pnMarket-1.1.1-paper-mc1.16.5-java17.jar \
             --repo pnFolder/pnMarket \
             --target "$GITHUB_SHA" \
-            --title "v1.1.0 - Добавлено избранное через чат" \
-            --notes-file RELEASE-1.1.0.md
+            --title "v1.1.1 - Исправлено отображение GUI" \
+            --notes-file RELEASE-1.1.1.md
