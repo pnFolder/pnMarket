@@ -1,16 +1,23 @@
 package ru.privatenull.gui;
 
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import ru.privatenull.PnMarketPlugin;
+
+import java.util.Map;
 
 public final class MarketInventoryListener implements Listener {
     private final PnMarketPlugin plugin;
@@ -19,12 +26,20 @@ public final class MarketInventoryListener implements Listener {
         this.plugin = plugin;
     }
 
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInventoryOpen(InventoryOpenEvent event) {
+        applyConfiguredBackground(event.getInventory());
+    }
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player player)) return;
         Inventory top = event.getView().getTopInventory();
         Inventory clicked = event.getClickedInventory();
         if (clicked == null) return;
+        if (isMarketView(top)) {
+            plugin.getServer().getScheduler().runTask(plugin, () -> applyConfiguredBackground(top));
+        }
         if (isAnimating(top, player)) {
             event.setCancelled(true);
             return;
@@ -122,6 +137,32 @@ public final class MarketInventoryListener implements Listener {
                 || holder instanceof BundleCreateView
                 || holder instanceof FavoritesView
                 || holder instanceof NotificationCatalogView;
+    }
+
+    private void applyConfiguredBackground(Inventory inventory) {
+        if (!isMarketView(inventory)) return;
+
+        ItemStack black = plugin.guiConfig().item(
+                "auction.decor.black", Material.BLACK_STAINED_GLASS_PANE, Map.of());
+        ItemStack orange = plugin.guiConfig().item(
+                "auction.decor.orange", Material.ORANGE_STAINED_GLASS_PANE, Map.of());
+
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            ItemStack current = inventory.getItem(slot);
+            if (!isLegacyBackground(current)) continue;
+            inventory.setItem(slot, (current.getType() == Material.BLACK_STAINED_GLASS_PANE ? black : orange).clone());
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean isLegacyBackground(ItemStack item) {
+        if (item == null) return false;
+        Material type = item.getType();
+        if (type != Material.BLACK_STAINED_GLASS_PANE && type != Material.ORANGE_STAINED_GLASS_PANE) {
+            return false;
+        }
+        ItemMeta meta = item.getItemMeta();
+        return meta == null || !meta.hasDisplayName() || meta.getDisplayName().trim().isEmpty();
     }
 
     @EventHandler
