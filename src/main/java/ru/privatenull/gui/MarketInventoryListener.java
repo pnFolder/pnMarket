@@ -6,7 +6,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -18,11 +17,6 @@ public final class MarketInventoryListener implements Listener {
 
     public MarketInventoryListener(PnMarketPlugin plugin) {
         this.plugin = plugin;
-    }
-
-    @EventHandler
-    public void onInventoryOpen(InventoryOpenEvent event) {
-        applyConfiguredDecorations(event.getInventory());
     }
 
     @EventHandler
@@ -105,10 +99,7 @@ public final class MarketInventoryListener implements Listener {
     }
 
     private void withTransition(Player player, int sourceSlot, Runnable action) {
-        plugin.withGuiTransition(player, sourceSlot, () -> {
-            action.run();
-            applyConfiguredDecorations(player.getOpenInventory().getTopInventory());
-        });
+        plugin.withGuiTransition(player, sourceSlot, action);
     }
 
     @EventHandler
@@ -122,26 +113,15 @@ public final class MarketInventoryListener implements Listener {
     }
 
     private boolean isMarketView(Inventory inventory) {
-        return viewKey(inventory) != null;
-    }
-
-    private void applyConfiguredDecorations(Inventory inventory) {
-        String view = viewKey(inventory);
-        if (view != null) plugin.guiConfig().applyDecorations(inventory, view);
-    }
-
-    private String viewKey(Inventory inventory) {
-        if (inventory == null) return null;
         Object holder = inventory.getHolder();
-        if (holder instanceof AuctionView) return "auction";
-        if (holder instanceof PurchaseView) return "purchase";
-        if (holder instanceof SellerView) return "seller";
-        if (holder instanceof MyItemsView) return "my-items";
-        if (holder instanceof BundlePreviewView) return "bundle-preview";
-        if (holder instanceof BundleCreateView) return "bundle-create";
-        if (holder instanceof FavoritesView) return "favorites";
-        if (holder instanceof NotificationCatalogView) return "notification-catalog";
-        return null;
+        return holder instanceof AuctionView
+                || holder instanceof PurchaseView
+                || holder instanceof SellerView
+                || holder instanceof MyItemsView
+                || holder instanceof BundlePreviewView
+                || holder instanceof BundleCreateView
+                || holder instanceof FavoritesView
+                || holder instanceof NotificationCatalogView;
     }
 
     @EventHandler
