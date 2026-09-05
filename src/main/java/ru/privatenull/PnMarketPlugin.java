@@ -19,6 +19,7 @@ import ru.privatenull.pnlibrary.localization.ItemLocalization;
 import ru.privatenull.pnlibrary.localization.MinecraftLocale;
 import ru.privatenull.pnlibrary.lifecycle.PluginRuntime;
 import ru.privatenull.pnlibrary.gui.GuiAnimationProfile;
+import ru.privatenull.pnlibrary.gui.GuiAnimationType;
 import ru.privatenull.pnlibrary.gui.GuiUpdateService;
 import ru.privatenull.pnlibrary.text.*;
 import ru.privatenull.pnlibrary.update.GitHubUpdater;
@@ -116,7 +117,11 @@ public final class PnMarketPlugin extends JavaPlugin {
     }
 
     public GuiAnimationProfile guiAnimationProfile() {
-        return GuiAnimationProfile.standard();
+        return new GuiAnimationProfile(
+                GuiAnimationType.NONE,
+                GuiAnimationType.NONE, Set.of(),
+                GuiAnimationType.NONE, Set.of(),
+                GuiAnimationType.NONE);
     }
 
     public GuiUpdateService guiUpdates() {
@@ -274,8 +279,6 @@ public final class PnMarketPlugin extends JavaPlugin {
 
     public void prepareJoinNotifications(Player player) {
         if (player == null) return;
-        // PlayerLoginEvent runs before the joining Player's saved data is loaded.
-        // Read the persisted profile while the player is still offline instead.
         UUID playerId = player.getUniqueId();
         OfflinePlayer savedPlayer = getServer().getOfflinePlayer(playerId);
         notificationOfflineSince.put(playerId,
