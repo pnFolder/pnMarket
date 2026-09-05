@@ -176,6 +176,21 @@ public final class MarketGuiController {
                 plugin.guiTransitionOrigin(player));
     }
 
+    private void applyConfiguredDecorations(Inventory inventory) {
+    if (inventory == null) return;
+    Object holder = inventory.getHolder();
+    String view = null;
+    if (holder instanceof AuctionView) view = "auction";
+    else if (holder instanceof PurchaseView) view = "purchase";
+    else if (holder instanceof SellerView) view = "seller";
+    else if (holder instanceof MyItemsView) view = "my-items";
+    else if (holder instanceof BundlePreviewView) view = "bundle-preview";
+    else if (holder instanceof BundleCreateView) view = "bundle-create";
+    else if (holder instanceof FavoritesView) view = "favorites";
+    else if (holder instanceof NotificationCatalogView) view = "notification-catalog";
+    if (view != null) gui.applyDecorations(inventory, view);
+}
+
     public void openAnimated(Player player, Inventory inventory) {
         openGui(player, inventory);
     }
@@ -488,6 +503,7 @@ public final class MarketGuiController {
         for (int slot : layout.orangeDecor()) {
             setSlot(inv, slot, orange);
         }
+        applyConfiguredDecorations(inv);
 
         if (isSearch) {
             ItemStack back = gui.item("search", Material.PLAYER_HEAD, Map.of());
@@ -1329,6 +1345,7 @@ public final class MarketGuiController {
 
         ItemStack black = createIcon(Material.BLACK_STAINED_GLASS_PANE, " ");
         for (int slot = 36; slot < 54; slot++) setSlot(view.inventory, slot, black);
+        applyConfiguredDecorations(view.inventory);
         int index = 0;
         for (ItemStack source : view.sourceSlots.values()) {
             if (index >= BUNDLE_CREATE_CONTENT_SLOTS.length) break;
@@ -1543,6 +1560,7 @@ public final class MarketGuiController {
 
         for (int slot : AUCTION_BLACK_SLOTS) setSlot(inventory, slot, black);
         for (int slot : AUCTION_ORANGE_SLOTS) setSlot(inventory, slot, orange);
+        applyConfiguredDecorations(inventory);
     }
 
     void handleBundlePreviewClick(Player player, BundlePreviewView view, int slot) {
@@ -1702,6 +1720,7 @@ public final class MarketGuiController {
         for (int slot : PURCHASE_ORANGE_SLOTS) {
             setSlot(inv, slot, orange);
         }
+        applyConfiguredDecorations(inv);
     }
 
     private void updateQuantityItems(PurchaseView pv) {
