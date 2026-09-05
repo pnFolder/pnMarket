@@ -27,7 +27,7 @@ public final class AuctionTabCompleter implements TabCompleter {
             return filter(List.of("sell", "kit", "notify", "delivery", "search", "show", "help"), args[0]);
         }
         String action = args[0].toLowerCase(Locale.ROOT);
-        if (args.length == 2 && action.equals("search")) {
+        if (args.length == 2 && (action.equals("search") || action.equals("notify"))) {
             return MarketSearch.tabComplete(plugin.activeListings(donate), args[1], plugin.itemLocalization());
         }
         if (args.length == 2 && action.equals("sell")) return filter(List.of("auto"), args[1]);
