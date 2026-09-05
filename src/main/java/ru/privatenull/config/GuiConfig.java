@@ -97,36 +97,40 @@ public final class GuiConfig {
     }
 
     /**
-     * Applies reusable decorative items from gui.yml.
-     *
-     * decorations:
-     *   frame:
-     *     material: IRON_BARS
-     *     name: " "
-     * decoration-layouts:
-     *   auction:
-     *     frame: [0, 1, 7, 8]
+     * Applies reusable decorative items from gui.yml without replacing functional GUI items.
+     * Menu-specific decorations are applied after global decorations and may override them.
      */
     public void applyDecorations(Inventory inventory, String view) {
         if (inventory == null || view == null || view.isBlank()) return;
-        applyDecorationLayout(inventory, "decoration-layouts.all");
-        boolean configured = applyDecorationLayout(inventory, "decoration-layouts." + view);
-        if (!configured && "auction".equals(view)) applyLegacyAuctionDecor(inventory);
+
+        Set<Integer> protectedSlots = new HashSet<>();
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            if (!canDecorateSlot(inventory.getItem(slot))) protectedSlots.add(slot);
+        }
+
+        applyDecorationLayout(inventory, "decoration-layouts.all", protectedSlots);
+        boolean configured = applyDecorationLayout(
+                inventory, "decoration-layouts." + view, protectedSlots);
+        if (!configured && "auction".equals(view)) {
+            applyLegacyAuctionDecor(inventory, protectedSlots);
+        }
     }
 
-    private boolean applyDecorationLayout(Inventory inventory, String path) {
+    private boolean applyDecorationLayout(Inventory inventory, String path, Set<Integer> protectedSlots) {
         ConfigurationSection section = config.getConfigurationSection(path);
         if (section == null) return false;
         for (String decoration : section.getKeys(false)) {
             ItemStack item = item("decorations." + decoration, Material.BLACK_STAINED_GLASS_PANE, Map.of());
             for (int slot : section.getIntegerList(decoration)) {
-                if (slot >= 0 && slot < inventory.getSize()) inventory.setItem(slot, item.clone());
+                if (slot >= 0 && slot < inventory.getSize() && !protectedSlots.contains(slot)) {
+                    inventory.setItem(slot, item.clone());
+                }
             }
         }
         return true;
     }
 
-    private void applyLegacyAuctionDecor(Inventory inventory) {
+    private void applyLegacyAuctionDecor(Inventory inventory, Set<Integer> protectedSlots) {
         ConfigurationSection legacy = config.getConfigurationSection("auction.layout.decor");
         if (legacy == null) return;
         for (String decoration : legacy.getKeys(false)) {
@@ -135,9 +139,24 @@ public final class GuiConfig {
                     ? Material.ORANGE_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
             ItemStack item = item(itemPath, fallback, Map.of());
             for (int slot : legacy.getIntegerList(decoration)) {
-                if (slot >= 0 && slot < inventory.getSize()) inventory.setItem(slot, item.clone());
+                if (slot >= 0 && slot < inventory.getSize() && !protectedSlots.contains(slot)) {
+                    inventory.setItem(slot, item.clone());
+                }
             }
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean canDecorateSlot(ItemStack current) {
+        if (current == null || current.getType().isAir()) return true;
+        Material type = current.getType();
+        if (type != Material.BLACK_STAINED_GLASS_PANE && type != Material.ORANGE_STAINED_GLASS_PANE) {
+            return false;
+        }
+        ItemMeta meta = current.getItemMeta();
+        if (meta == null || !meta.hasDisplayName()) return true;
+        String name = meta.getDisplayName();
+        return name == null || name.trim().isEmpty();
     }
 
     public String text(String path) {
