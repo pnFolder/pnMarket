@@ -16,85 +16,6 @@ jobs:
       - name: Checkout pnMarket
         uses: actions/checkout@v4
 
-      - name: Patch GUI decoration render order
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          path = Path('src/main/java/ru/privatenull/gui/MarketGuiController.java')
-          text = path.read_text()
-          original = text
-
-          if 'private void applyConfiguredDecorations(Inventory inventory)' not in text:
-              marker = '    public void openAnimated(Player player, Inventory inventory) {'
-              helper = '''    private void applyConfiguredDecorations(Inventory inventory) {
-              if (inventory == null) return;
-              Object holder = inventory.getHolder();
-              String view = null;
-              if (holder instanceof AuctionView) view = "auction";
-              else if (holder instanceof PurchaseView) view = "purchase";
-              else if (holder instanceof SellerView) view = "seller";
-              else if (holder instanceof MyItemsView) view = "my-items";
-              else if (holder instanceof BundlePreviewView) view = "bundle-preview";
-              else if (holder instanceof BundleCreateView) view = "bundle-create";
-              else if (holder instanceof FavoritesView) view = "favorites";
-              else if (holder instanceof NotificationCatalogView) view = "notification-catalog";
-              if (view != null) gui.applyDecorations(inventory, view);
-          }
-
-          '''
-              if marker not in text:
-                  raise SystemExit('openAnimated marker not found')
-              text = text.replace(marker, helper + marker, 1)
-
-          if not re.search(r'layout\.orangeDecor\(\).*?applyConfiguredDecorations\(inv\);', text, re.S):
-              text, count = re.subn(
-                  r'(for \(int slot : layout\.orangeDecor\(\)\) \{\s*setSlot\(inv, slot, orange\);\s*\})\s*(if \(isSearch\))',
-                  r'\1\n        applyConfiguredDecorations(inv);\n\n        \2', text, count=1)
-              if count != 1:
-                  raise SystemExit('decorateAuction insertion point not found')
-
-          purchase_method = re.search(r'private void decoratePurchase\(Inventory inv\) \{.*?\n    \}', text, re.S)
-          if not purchase_method:
-              raise SystemExit('decoratePurchase method not found')
-          purchase_block = purchase_method.group(0)
-          if 'applyConfiguredDecorations(inv);' not in purchase_block:
-              patched, count = re.subn(
-                  r'(for \(int slot : PURCHASE_ORANGE_SLOTS\) \{\s*setSlot\(inv, slot, orange\);\s*\})\s*\n    \}',
-                  r'\1\n        applyConfiguredDecorations(inv);\n    }', purchase_block, count=1)
-              if count != 1:
-                  raise SystemExit('decoratePurchase insertion point not found')
-              text = text.replace(purchase_block, patched, 1)
-
-          preview_method = re.search(r'private void decorateBundlePreview\(Inventory inventory\) \{.*?\n    \}', text, re.S)
-          if not preview_method:
-              raise SystemExit('decorateBundlePreview method not found')
-          preview_block = preview_method.group(0)
-          if 'applyConfiguredDecorations(inventory);' not in preview_block:
-              patched, count = re.subn(
-                  r'(for \(int slot : AUCTION_ORANGE_SLOTS\) setSlot\(inventory, slot, orange\);)\s*\n    \}',
-                  r'\1\n        applyConfiguredDecorations(inventory);\n    }', preview_block, count=1)
-              if count != 1:
-                  raise SystemExit('decorateBundlePreview insertion point not found')
-              text = text.replace(preview_block, patched, 1)
-
-          bundle_create_method = re.search(r'public void openBundleCreatePreview\(.*?\n    \}', text, re.S)
-          if not bundle_create_method:
-              raise SystemExit('openBundleCreatePreview method not found')
-          bundle_create_block = bundle_create_method.group(0)
-          if 'applyConfiguredDecorations(view.inventory);' not in bundle_create_block:
-              patched, count = re.subn(
-                  r'(for \(int slot = 36; slot < 54; slot\+\+\) setSlot\(view\.inventory, slot, black\);)',
-                  r'\1\n        applyConfiguredDecorations(view.inventory);', bundle_create_block, count=1)
-              if count != 1:
-                  raise SystemExit('bundle-create insertion point not found')
-              text = text.replace(bundle_create_block, patched, 1)
-
-          if text != original:
-              path.write_text(text)
-          PY
-
       - name: Verify GUI hotfix architecture
         run: |
           ! grep -q "InventoryOpenEvent" src/main/java/ru/privatenull/gui/MarketInventoryListener.java
@@ -103,18 +24,6 @@ jobs:
           grep -q "applyConfiguredDecorations(inv);" src/main/java/ru/privatenull/gui/MarketGuiController.java
           grep -q "applyConfiguredDecorations(inventory);" src/main/java/ru/privatenull/gui/MarketGuiController.java
           grep -q "applyConfiguredDecorations(view.inventory);" src/main/java/ru/privatenull/gui/MarketGuiController.java
-
-      - name: Persist GUI render fix
-        run: |
-          if git diff --quiet -- src/main/java/ru/privatenull/gui/MarketGuiController.java; then
-            echo "GUI render fix already committed."
-          else
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add src/main/java/ru/privatenull/gui/MarketGuiController.java
-            git commit -m "fix: render decorations before GUI opens"
-            git push origin HEAD:${GITHUB_REF_NAME}
-          fi
 
       - name: Checkout pnLibrary
         run: git clone --depth=1 https://github.com/pnFolder/pnLibrary.git ../pnLibrary
