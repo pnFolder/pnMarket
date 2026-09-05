@@ -1,6 +1,5 @@
 package ru.privatenull.gui;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -13,11 +12,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import ru.privatenull.PnMarketPlugin;
-
-import java.util.Map;
 
 public final class MarketInventoryListener implements Listener {
     private final PnMarketPlugin plugin;
@@ -28,7 +23,7 @@ public final class MarketInventoryListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onInventoryOpen(InventoryOpenEvent event) {
-        applyConfiguredBackground(event.getInventory());
+        applyConfiguredDecorations(event.getInventory());
     }
 
     @EventHandler
@@ -38,7 +33,7 @@ public final class MarketInventoryListener implements Listener {
         Inventory clicked = event.getClickedInventory();
         if (clicked == null) return;
         if (isMarketView(top)) {
-            plugin.getServer().getScheduler().runTask(plugin, () -> applyConfiguredBackground(top));
+            plugin.getServer().getScheduler().runTask(plugin, () -> applyConfiguredDecorations(top));
         }
         if (isAnimating(top, player)) {
             event.setCancelled(true);
@@ -128,41 +123,25 @@ public final class MarketInventoryListener implements Listener {
     }
 
     private boolean isMarketView(Inventory inventory) {
+        return viewKey(inventory) != null;
+    }
+
+    private void applyConfiguredDecorations(Inventory inventory) {
+        String view = viewKey(inventory);
+        if (view != null) plugin.guiConfig().applyDecorations(inventory, view);
+    }
+
+    private String viewKey(Inventory inventory) {
         Object holder = inventory.getHolder();
-        return holder instanceof AuctionView
-                || holder instanceof PurchaseView
-                || holder instanceof SellerView
-                || holder instanceof MyItemsView
-                || holder instanceof BundlePreviewView
-                || holder instanceof BundleCreateView
-                || holder instanceof FavoritesView
-                || holder instanceof NotificationCatalogView;
-    }
-
-    private void applyConfiguredBackground(Inventory inventory) {
-        if (!isMarketView(inventory)) return;
-
-        ItemStack black = plugin.guiConfig().item(
-                "auction.decor.black", Material.BLACK_STAINED_GLASS_PANE, Map.of());
-        ItemStack orange = plugin.guiConfig().item(
-                "auction.decor.orange", Material.ORANGE_STAINED_GLASS_PANE, Map.of());
-
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            ItemStack current = inventory.getItem(slot);
-            if (!isLegacyBackground(current)) continue;
-            inventory.setItem(slot, (current.getType() == Material.BLACK_STAINED_GLASS_PANE ? black : orange).clone());
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    private boolean isLegacyBackground(ItemStack item) {
-        if (item == null) return false;
-        Material type = item.getType();
-        if (type != Material.BLACK_STAINED_GLASS_PANE && type != Material.ORANGE_STAINED_GLASS_PANE) {
-            return false;
-        }
-        ItemMeta meta = item.getItemMeta();
-        return meta == null || !meta.hasDisplayName() || meta.getDisplayName().trim().isEmpty();
+        if (holder instanceof AuctionView) return "auction";
+        if (holder instanceof PurchaseView) return "purchase";
+        if (holder instanceof SellerView) return "seller";
+        if (holder instanceof MyItemsView) return "my-items";
+        if (holder instanceof BundlePreviewView) return "bundle-preview";
+        if (holder instanceof BundleCreateView) return "bundle-create";
+        if (holder instanceof FavoritesView) return "favorites";
+        if (holder instanceof NotificationCatalogView) return "notification-catalog";
+        return null;
     }
 
     @EventHandler
