@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import ru.privatenull.PnMarketPlugin;
+import ru.privatenull.market.FavoriteService;
 import ru.privatenull.market.MarketSearch;
 
 import java.util.Locale;
@@ -75,12 +76,38 @@ public final class AuctionCommand implements CommandExecutor {
     }
 
     private boolean notify(Player player, String[] args) {
-        String root = donate ? "/dah" : "/ah";
+        String query;
         if (args.length == 1) {
-            plugin.openNotificationCatalog(player, donate);
+            ItemStack hand = player.getInventory().getItemInMainHand();
+            if (hand.getType().isAir()) {
+                plugin.openNotificationCatalog(player, donate);
+                return true;
+            }
+            query = MarketSearch.extractName(hand, plugin.itemLocalization());
+        } else {
+            query = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length)).trim();
+        }
+
+        if (query.isBlank()) {
+            usage(player, (donate ? "/dah" : "/ah") + " notify [название]");
             return true;
         }
-        usage(player, root + " notify");
+
+        FavoriteService.AddResult result = plugin.favorites().addName(player.getUniqueId(), donate, query);
+        switch (result) {
+            case ADDED, UPDATED -> {
+                player.sendMessage(plugin.messages().message("notification.favorite-added"));
+                plugin.playSound(player, "action.favorite-added");
+            }
+            case DUPLICATE -> {
+                player.sendMessage(plugin.messages().message("notification.favorite-duplicate"));
+                plugin.playSound(player, "error.default");
+            }
+            case INVALID -> {
+                player.sendMessage(plugin.messages().message("notification.favorite-invalid"));
+                plugin.playSound(player, "error.default");
+            }
+        }
         return true;
     }
 
@@ -147,7 +174,7 @@ public final class AuctionCommand implements CommandExecutor {
         player.sendMessage("§8  ▸ §e" + root + " sell <цена> §8— §fвыставить предмет из руки");
         player.sendMessage("§8  ▸ §e" + root + " sell auto §8— §fавтоматически рассчитать цену");
         player.sendMessage("§8  ▸ §e" + root + " kit <цена> [название] §8— §fвыставить набор");
-        player.sendMessage("§8  ▸ §e" + root + " notify §8— §fуведомления о подходящих лотах");
+        player.sendMessage("§8  ▸ §e" + root + " notify [название] §8— §fдобавить предмет в избранное");
         player.sendMessage("§8  ▸ §e" + root + " delivery §8— §fзабрать доставки автопокупки");
         player.sendMessage("§8  ▸ §e" + root + " search <название> §8— §fнайти лот");
         player.sendMessage("§8  ▸ §e" + root + " show <игрок> §8— §fпосмотреть товары игрока");
