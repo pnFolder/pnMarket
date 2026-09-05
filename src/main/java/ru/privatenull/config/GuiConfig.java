@@ -1,7 +1,10 @@
 package ru.privatenull.config;
 
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -81,10 +84,60 @@ public final class GuiConfig {
         if (meta != null) {
             meta.displayName(ColorUtil.component(name).decoration(TextDecoration.ITALIC, false));
             meta.setLore(lore(path + ".lore", placeholders));
+            if (config.contains(path + ".custom-model-data")) {
+                meta.setCustomModelData(config.getInt(path + ".custom-model-data"));
+            }
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_UNBREAKABLE);
             item.setItemMeta(meta);
         }
+        if (config.getBoolean(path + ".glow", false)) {
+            item.addUnsafeEnchantment(Enchantment.DURABILITY, 1);
+        }
         return item;
+    }
+
+    /**
+     * Applies reusable decorative items from gui.yml.
+     *
+     * decorations:
+     *   frame:
+     *     material: IRON_BARS
+     *     name: " "
+     * decoration-layouts:
+     *   auction:
+     *     frame: [0, 1, 7, 8]
+     */
+    public void applyDecorations(Inventory inventory, String view) {
+        if (inventory == null || view == null || view.isBlank()) return;
+        applyDecorationLayout(inventory, "decoration-layouts.all");
+        boolean configured = applyDecorationLayout(inventory, "decoration-layouts." + view);
+        if (!configured && "auction".equals(view)) applyLegacyAuctionDecor(inventory);
+    }
+
+    private boolean applyDecorationLayout(Inventory inventory, String path) {
+        ConfigurationSection section = config.getConfigurationSection(path);
+        if (section == null) return false;
+        for (String decoration : section.getKeys(false)) {
+            ItemStack item = item("decorations." + decoration, Material.BLACK_STAINED_GLASS_PANE, Map.of());
+            for (int slot : section.getIntegerList(decoration)) {
+                if (slot >= 0 && slot < inventory.getSize()) inventory.setItem(slot, item.clone());
+            }
+        }
+        return true;
+    }
+
+    private void applyLegacyAuctionDecor(Inventory inventory) {
+        ConfigurationSection legacy = config.getConfigurationSection("auction.layout.decor");
+        if (legacy == null) return;
+        for (String decoration : legacy.getKeys(false)) {
+            String itemPath = "auction.decor." + decoration;
+            Material fallback = "orange".equalsIgnoreCase(decoration)
+                    ? Material.ORANGE_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
+            ItemStack item = item(itemPath, fallback, Map.of());
+            for (int slot : legacy.getIntegerList(decoration)) {
+                if (slot >= 0 && slot < inventory.getSize()) inventory.setItem(slot, item.clone());
+            }
+        }
     }
 
     public String text(String path) {

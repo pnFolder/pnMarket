@@ -28,6 +28,8 @@ import ru.privatenull.util.*;
 import java.util.*;
 
 public final class PnMarketPlugin extends JavaPlugin {
+    private static final String SUPPORT_DISCORD = "https://discord.gg/SZxPP9surw";
+
     private MessagesConfig messages;
     private GuiConfig guiConfig;
     private SoundsConfig sounds;
@@ -158,7 +160,7 @@ public final class PnMarketPlugin extends JavaPlugin {
     }
 
     public String getSupportDiscord() {
-        return PluginRuntime.supportUrl();
+        return SUPPORT_DISCORD;
     }
 
     public FavoriteService favorites() {
@@ -395,7 +397,7 @@ public final class PnMarketPlugin extends JavaPlugin {
     }
 
     private void startUpdateChecker() {
-        updateChecker = new GitHubUpdater(this, "Dy6HiLa/pnMarket", "pnmarket.admin", PluginRuntime.supportUrl());
+        updateChecker = new GitHubUpdater(this, "pnFolder/pnMarket", "pnmarket.admin", SUPPORT_DISCORD);
         updateChecker.start();
     }
 }

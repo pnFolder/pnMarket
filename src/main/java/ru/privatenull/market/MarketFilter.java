@@ -18,13 +18,18 @@ public final class MarketFilter {
         PRICE_UNIT_ASC
     }
 
+    /**
+     * Keep the actual click cycle in the same order that is shown in the GUI lore.
+     * Otherwise one click can appear to jump over entries even though the enum value
+     * itself only changes once.
+     */
     public static final List<SortType> SORT_ORDER = Arrays.asList(
             SortType.NEW_FIRST,
             SortType.OLD_FIRST,
-            SortType.PRICE_TOTAL_DESC,
-            SortType.PRICE_TOTAL_ASC,
             SortType.PRICE_UNIT_DESC,
-            SortType.PRICE_UNIT_ASC
+            SortType.PRICE_UNIT_ASC,
+            SortType.PRICE_TOTAL_DESC,
+            SortType.PRICE_TOTAL_ASC
     );
 
     public static SortType nextSort(SortType current) {
