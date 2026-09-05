@@ -39,6 +39,10 @@ decoration-layouts:
 
   notification-catalog:
     custom-head: [45, 53]
+
+  delivery:
+    dark-background: [0, 8, 45, 53]
+    custom-frame: [4]
 ```
 
 Supported item properties:
@@ -60,6 +64,7 @@ Supported layout names:
 - `bundle-create`
 - `favorites`
 - `notification-catalog`
+- `delivery`
 - `all` - decoration is applied to every pnMarket GUI
 
 A menu-specific layout is applied after `all`, so it can override a global decoration in the same slot.

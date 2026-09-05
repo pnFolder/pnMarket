@@ -3,7 +3,6 @@ name: Release Build
 on:
   push:
     branches:
-      - hotfix/v1.1.1
       - main
 
 permissions:
@@ -24,6 +23,7 @@ jobs:
           grep -q "applyConfiguredDecorations(inv);" src/main/java/ru/privatenull/gui/MarketGuiController.java
           grep -q "applyConfiguredDecorations(inventory);" src/main/java/ru/privatenull/gui/MarketGuiController.java
           grep -q "applyConfiguredDecorations(view.inventory);" src/main/java/ru/privatenull/gui/MarketGuiController.java
+          grep -q 'gui.applyDecorations(inventory, "delivery");' src/main/java/ru/privatenull/delivery/DeliveryService.java
 
       - name: Checkout pnLibrary
         run: git clone --depth=1 https://github.com/pnFolder/pnLibrary.git ../pnLibrary
@@ -42,13 +42,13 @@ jobs:
         run: ./gradlew clean build
 
       - name: Prepare release artifact
-        run: cp build/libs/pnMarket-1.1.1.jar pnMarket-1.1.1-paper-mc1.16.5-java17.jar
+        run: cp build/libs/pnMarket-1.2.0.jar pnMarket-1.2.0-paper-mc1.16.5-java17.jar
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pnMarket-1.1.1-paper-mc1.16.5-java17
-          path: pnMarket-1.1.1-paper-mc1.16.5-java17.jar
+          name: pnMarket-1.2.0-paper-mc1.16.5-java17
+          path: pnMarket-1.2.0-paper-mc1.16.5-java17.jar
           if-no-files-found: error
 
       - name: Publish GitHub Release
@@ -56,13 +56,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view v1.1.1 >/dev/null 2>&1; then
-            echo "Release v1.1.1 already exists; skipping publication."
+          if gh release view v1.2.0 >/dev/null 2>&1; then
+            echo "Release v1.2.0 already exists; skipping publication."
             exit 0
           fi
-          gh release create v1.1.1 \
-            pnMarket-1.1.1-paper-mc1.16.5-java17.jar \
+          gh release create v1.2.0 \
+            pnMarket-1.2.0-paper-mc1.16.5-java17.jar \
             --repo pnFolder/pnMarket \
             --target "$GITHUB_SHA" \
-            --title "v1.1.1 - Исправлено отображение GUI" \
-            --notes-file RELEASE-1.1.1.md
+            --title "v1.2.0 — Добавлены декорации доставки" \
+            --notes-file RELEASE-1.2.0.md

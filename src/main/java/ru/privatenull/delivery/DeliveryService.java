@@ -245,6 +245,7 @@ public final class DeliveryService implements Listener, AutoCloseable {
             inventory.setItem(slot, black);
         }
         for (int slot : new int[]{1, 7, 9, 17, 36, 44}) inventory.setItem(slot, orange);
+        gui.applyDecorations(inventory, "delivery");
     }
 
     private void submit(Runnable task) {

@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Dy6HiLa/pnMarket/releases/latest"><img src="https://img.shields.io/badge/Скачать-v1.0.5-68FB3C?style=for-the-badge&labelColor=17241F" alt="Скачать pnMarket 1.0.5"></a>
+  <a href="https://github.com/pnFolder/pnMarket/releases/latest"><img src="https://img.shields.io/badge/Скачать-v1.2.0-68FB3C?style=for-the-badge&labelColor=17241F" alt="Скачать pnMarket 1.2.0"></a>
   <a href="https://discord.gg/SZxPP9surw"><img src="https://img.shields.io/badge/Discord-Поддержка-5865F2?style=for-the-badge&labelColor=17241F" alt="Discord"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-17241F?style=for-the-badge" alt="MIT"></a>
 </p>
@@ -105,6 +105,13 @@ action:
 ```
 
 Все звуки интерфейса, действий, ошибок и Machine находятся в `sounds.yml`. `type` — имя значения `Sound` из Bukkit/Paper; `volume` и `pitch` принимают значения от `0` до `2`. Чтобы отключить отдельный звук, укажите `type: NONE`. Команда `/pnmarket reload` перечитывает файл.
+
+### Декорации GUI
+
+Декоративные предметы и их слоты можно полностью настроить для каждого окна, включая аукцион,
+покупку, наборы, избранное, уведомления и доставку. Поддерживаются обычные материалы, головы
+`base64`, `custom-model-data`, свечение, имя и lore. Подробная схема и примеры находятся в
+[`docs/gui-decorations.md`](docs/gui-decorations.md).
 
 ### Локализация предметов
 
@@ -256,7 +263,7 @@ storage:
 
 ## Установка
 
-1. Скачайте [`pnMarket-1.0.5.jar`](https://github.com/Dy6HiLa/pnMarket/releases/latest).
+1. Скачайте актуальный JAR со страницы [последнего релиза](https://github.com/pnFolder/pnMarket/releases/latest).
 2. Поместите JAR в папку `plugins/`.
 3. Установите выбранный плагин экономики и его зависимости: Vault, PlayerPoints или ExcellentEconomy.
 4. Запустите сервер и настройте `config.yml`, `gui.yml`, `messages.yml` и `sounds.yml`.
@@ -273,7 +280,7 @@ storage:
 
 Для этой версии нужен соседний клон `pnFolder/pnLibrary` на коммите
 `6053231cffd72fec870b72d6410b18f141741f51`: он подключается через `includeBuild('../pnLibrary')`.
-Текущая ветка `main` pnLibrary содержит другой API обновлений и несовместима с pnMarket 1.0.5.
+Текущая ветка `main` pnLibrary содержит другой API обновлений и несовместима с pnMarket 1.2.0.
 Используйте JDK 17–22 для запуска Gradle 8.8; готовый плагин рассчитан на Java 17+.
 
 ```powershell
@@ -283,7 +290,7 @@ git -C ../pnLibrary checkout 6053231cffd72fec870b72d6410b18f141741f51
 ./gradlew.bat --no-daemon shadowJar
 ```
 
-Готовый файл: `build/libs/pnMarket-1.0.5.jar`.
+Готовый файл: `build/libs/pnMarket-1.2.0.jar`.
 
 ## Поддержка
 
