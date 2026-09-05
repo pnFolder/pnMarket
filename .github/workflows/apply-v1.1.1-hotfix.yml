@@ -1,0 +1,97 @@
+name: Apply v1.1.1 GUI hotfix
+
+on:
+  push:
+    branches:
+      - hotfix/v1.1.1
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/v1.1.1
+
+      - name: Patch GUI render path
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/main/java/ru/privatenull/gui/MarketGuiController.java')
+          text = path.read_text()
+
+          old = '''    private void openGui(Player player, Inventory inventory) {
+              guiAnimations.cancel(player);
+              guiAnimations.open(player, inventory, false, plugin.guiAnimationProfile(),
+                      plugin.guiTransitionOrigin(player));
+          }
+
+          private void animateRedraw(Player player, Inventory inventory) {
+              guiAnimations.cancel(player);
+              guiAnimations.open(player, inventory, false, plugin.guiAnimationProfile(),
+                      plugin.guiTransitionOrigin(player));
+          }
+          '''
+          new = '''    private void openGui(Player player, Inventory inventory) {
+              guiAnimations.cancel(player);
+              applyConfiguredDecorations(inventory);
+              guiAnimations.open(player, inventory, false, plugin.guiAnimationProfile(),
+                      plugin.guiTransitionOrigin(player));
+          }
+
+          private void animateRedraw(Player player, Inventory inventory) {
+              guiAnimations.cancel(player);
+              applyConfiguredDecorations(inventory);
+              guiAnimations.open(player, inventory, false, plugin.guiAnimationProfile(),
+                      plugin.guiTransitionOrigin(player));
+          }
+
+          private void applyConfiguredDecorations(Inventory inventory) {
+              if (inventory == null) return;
+              Object holder = inventory.getHolder();
+              String view = null;
+              if (holder instanceof AuctionView) view = "auction";
+              else if (holder instanceof PurchaseView) view = "purchase";
+              else if (holder instanceof SellerView) view = "seller";
+              else if (holder instanceof MyItemsView) view = "my-items";
+              else if (holder instanceof BundlePreviewView) view = "bundle-preview";
+              else if (holder instanceof BundleCreateView) view = "bundle-create";
+              else if (holder instanceof FavoritesView) view = "favorites";
+              else if (holder instanceof NotificationCatalogView) view = "notification-catalog";
+              if (view != null) gui.applyDecorations(inventory, view);
+          }
+          '''
+          if old not in text:
+              raise SystemExit('openGui/animateRedraw block not found')
+          text = text.replace(old, new, 1)
+
+          old = '''        for (int slot : PURCHASE_ORANGE_SLOTS) {
+              setSlot(inv, slot, orange);
+          }
+      }
+          '''
+          new = '''        for (int slot : PURCHASE_ORANGE_SLOTS) {
+              setSlot(inv, slot, orange);
+          }
+          applyConfiguredDecorations(inv);
+      }
+          '''
+          if old not in text:
+              raise SystemExit('decoratePurchase tail not found')
+          text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          PY
+
+      - name: Commit patched source
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/apply-v1.1.1-hotfix.yml
+          git add src/main/java/ru/privatenull/gui/MarketGuiController.java
+          git commit -m "fix: render decorations before GUI animation"
+          git push origin HEAD:hotfix/v1.1.1
