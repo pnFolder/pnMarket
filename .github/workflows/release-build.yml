@@ -4,7 +4,10 @@ on:
   push:
     branches:
       - feature/chat-favorites
-  workflow_dispatch:
+      - main
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -38,3 +41,19 @@ jobs:
           name: pnMarket-1.1.0-paper-mc1.16.5-java17
           path: pnMarket-1.1.0-paper-mc1.16.5-java17.jar
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v1.1.0 >/dev/null 2>&1; then
+            echo "Release v1.1.0 already exists; skipping publication."
+            exit 0
+          fi
+          gh release create v1.1.0 \
+            pnMarket-1.1.0-paper-mc1.16.5-java17.jar \
+            --repo pnFolder/pnMarket \
+            --target "$GITHUB_SHA" \
+            --title "v1.1.0 - Добавлено избранное через чат" \
+            --notes-file RELEASE-1.1.0.md
