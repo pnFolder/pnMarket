@@ -4,7 +4,7 @@ main: ru.privatenull.PnMarketPlugin
 api-version: '1.16'
 authors: [ privatenull ]
 description: pnMarket - AuctionPlugin
-website: https://github.com/Dy6HiLa/pnMarket
+website: https://github.com/pnFolder/pnMarket
 depend: [ProtocolLib]
 softdepend: [Vault, PlayerPoints, ExcellentEconomy]
 libraries:
