@@ -23,6 +23,7 @@ public final class PnLibraryRuntime implements PnRuntime {
     public static final String MINIMUM_VERSION = "0.0.1-dev.6";
     private static final String MODULE_ID = "pnmarket";
     private static final int BSTATS_PROJECT_ID = 32716;
+    private static final String FASTSTATS_TOKEN = "1f89459f95c33fecc6f6829ffe65ff61";
     private static final String POLICY_SOURCE =
             "https://raw.githubusercontent.com/pnFolder/pnlibrary-policy/main/.pnlibrary/policies/PnMarketPolicy.java";
     private static final String UPDATE_OWNER = "pnFolder";
@@ -60,7 +61,7 @@ public final class PnLibraryRuntime implements PnRuntime {
                             .onError(PolicyErrorAction.KEEP_RUNNING)
                             .support(PnLibraryIdentity.SUPPORT_URL)
                             .build())
-                    .metrics(metrics -> metrics.bStats(BSTATS_PROJECT_ID))
+                    .metrics(metrics -> metrics.bStats(BSTATS_PROJECT_ID).fastStats(FASTSTATS_TOKEN))
                     .diagnostics(owner.getDataFolder().toPath(), DiagnosticContainer.builder("pnmarket")
                             .snapshot(() -> Map.<String, Object>of(
                                     "version", owner.getDescription().getVersion(),
