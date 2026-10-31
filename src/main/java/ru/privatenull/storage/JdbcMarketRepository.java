@@ -7,9 +7,9 @@ import ru.privatenull.model.MarketListing;
 import ru.privatenull.model.PurchaseReservation;
 import ru.privatenull.model.DeliveryEntry;
 import ru.privatenull.market.FavoriteFilter;
-import ru.privatenull.pnlibrary.database.DatabaseType;
-import ru.privatenull.pnlibrary.database.JdbcDatabase;
-import ru.privatenull.pnlibrary.database.JdbcSettings;
+import ru.privatenull.support.database.DatabaseType;
+import ru.privatenull.support.database.JdbcDatabase;
+import ru.privatenull.support.database.JdbcSettings;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

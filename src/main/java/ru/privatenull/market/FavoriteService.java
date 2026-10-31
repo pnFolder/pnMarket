@@ -13,7 +13,7 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.entity.Player;
 import ru.privatenull.PnMarketPlugin;
 import ru.privatenull.model.MarketListing;
-import ru.privatenull.pnlibrary.text.ColorUtil;
+import ru.privatenull.support.text.ColorUtil;
 import ru.privatenull.service.MarketStorageFactory;
 import ru.privatenull.storage.MarketStorage;
 

@@ -1,12 +1,15 @@
 package ru.privatenull;
 
 import org.bukkit.Bukkit;
-import org.bstats.bukkit.Metrics;
 import org.bukkit.entity.Player;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.pnfolder.pnlibrary.bukkit.bootstrap.PnLibraryBootstrap;
+import ru.privatenull.bootstrap.PnLibraryLifecycleListener;
 import ru.privatenull.command.*;
+import ru.privatenull.integration.PnLibraryRuntime;
+import ru.privatenull.integration.PnRuntime;
 import ru.privatenull.delivery.DeliveryService;
 import ru.privatenull.config.*;
 import ru.privatenull.gui.*;
@@ -14,18 +17,17 @@ import ru.privatenull.gui.machine.MarketMachineService;
 import ru.privatenull.market.*;
 import ru.privatenull.model.*;
 import ru.privatenull.notification.*;
-import ru.privatenull.pnlibrary.compat.*;
-import ru.privatenull.pnlibrary.localization.ItemLocalization;
-import ru.privatenull.pnlibrary.localization.MinecraftLocale;
-import ru.privatenull.pnlibrary.lifecycle.PluginRuntime;
-import ru.privatenull.pnlibrary.gui.GuiAnimationProfile;
-import ru.privatenull.pnlibrary.gui.GuiUpdateService;
-import ru.privatenull.pnlibrary.text.*;
-import ru.privatenull.pnlibrary.update.GitHubUpdater;
+import ru.privatenull.support.compat.*;
+import ru.privatenull.support.localization.ItemLocalization;
+import ru.privatenull.support.localization.MinecraftLocale;
+import ru.privatenull.support.gui.GuiAnimationProfile;
+import ru.privatenull.support.gui.GuiUpdateService;
+import ru.privatenull.support.text.*;
 import ru.privatenull.service.*;
 import ru.privatenull.util.*;
 
 import java.util.*;
+import java.util.logging.Level;
 
 public final class PnMarketPlugin extends JavaPlugin {
     private static final String SUPPORT_DISCORD = "https://discord.gg/SZxPP9surw";
@@ -42,14 +44,38 @@ public final class PnMarketPlugin extends JavaPlugin {
     private DeliveryService deliveries;
     private AutoBuyPriceInputService autoBuyPriceInput;
     private final Map<UUID, Long> notificationOfflineSince = new HashMap<>();
-    private GitHubUpdater updateChecker;
+    private boolean pnLibraryReady;
+    private PnRuntime pnRuntime;
     private MarketMachineService machine;
     private GuiUpdateService guiUpdates;
     private MarketStorageFactory storageFactory;
     private final Map<UUID, Integer> guiTransitionOrigins = new HashMap<>();
 
     @Override
+    public void onLoad() {
+        try {
+            pnLibraryReady = PnLibraryBootstrap.ensureInstalled(this, PnLibraryRuntime.MINIMUM_VERSION);
+        } catch (Throwable failure) {
+            getLogger().log(Level.SEVERE,
+                    "Не удалось автоматически подготовить pnLibrary. pnMarket не будет запущен.", failure);
+        }
+    }
+
+    @Override
     public void onEnable() {
+        if (!pnLibraryReady) {
+            getLogger().severe("pnLibrary не подготовлена: проверьте доступ к GitHub и ошибку загрузки выше.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        try {
+            pnRuntime = PnLibraryRuntime.connect(this);
+        } catch (Throwable failure) {
+            getLogger().log(Level.SEVERE, "pnLibrary не удалось включить или подключить к pnMarket.", failure);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        getServer().getPluginManager().registerEvents(new PnLibraryLifecycleListener(this), this);
         saveDefaultConfig();
         messages = new MessagesConfig(this);
         guiConfig = new GuiConfig(this);
@@ -76,8 +102,9 @@ public final class PnMarketPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MarketInventoryListener(this), this);
         machine = new MarketMachineService(this);
         getServer().getPluginManager().registerEvents(machine, this);
-        startUpdateChecker();
-        new Metrics(this, 32716);
+        String storageType = getConfig().getString("storage.type", "sqlite");
+        pnRuntime.register(storageType);
+        pnRuntime.enabled(storageType);
     }
 
     @Override
@@ -88,7 +115,15 @@ public final class PnMarketPlugin extends JavaPlugin {
         if (deliveries != null) deliveries.close();
         if (storageFactory != null) storageFactory.close();
         if (guiUpdates != null) guiUpdates.close();
-        if (updateChecker != null) updateChecker.cancel();
+        PnRuntime closing = pnRuntime;
+        pnRuntime = null;
+        if (closing != null) {
+            try {
+                closing.close();
+            } catch (Exception exception) {
+                getLogger().log(Level.WARNING, "Не удалось корректно закрыть контекст pnLibrary", exception);
+            }
+        }
     }
 
     public void reloadRuntime() {
@@ -98,8 +133,6 @@ public final class PnMarketPlugin extends JavaPlugin {
         sounds.reload();
         loadItemLocalization();
         runtime.reload();
-        if (updateChecker != null) updateChecker.cancel();
-        startUpdateChecker();
     }
 
     public void reloadGuiRuntime() {
@@ -155,12 +188,12 @@ public final class PnMarketPlugin extends JavaPlugin {
         machine.open(player);
     }
 
-    public GitHubUpdater getUpdateChecker() {
-        return updateChecker;
+    public String updateStatus(String currentVersion) {
+        return pnRuntime == null ? "&7проверяется" : pnRuntime.updateStatus(currentVersion);
     }
 
     public String getSupportDiscord() {
-        return SUPPORT_DISCORD;
+        return pnRuntime == null ? SUPPORT_DISCORD : pnRuntime.supportUrl();
     }
 
     public FavoriteService favorites() {
@@ -283,7 +316,6 @@ public final class PnMarketPlugin extends JavaPlugin {
     }
 
     public void notifyOnJoin(Player player) {
-        if (updateChecker != null) updateChecker.notifyAdminOnJoin(player);
         if (notifications != null) notifications.deliver(player);
         if (deliveries != null) deliveries.deliverFitting(player);
         long offlineSince = notificationOfflineSince.getOrDefault(player.getUniqueId(), -1L);
@@ -394,10 +426,5 @@ public final class PnMarketPlugin extends JavaPlugin {
         var handler = new AuctionCommand(this, donate);
         command.setExecutor(handler);
         command.setTabCompleter(new AuctionTabCompleter(this, donate));
-    }
-
-    private void startUpdateChecker() {
-        updateChecker = new GitHubUpdater(this, "pnFolder/pnMarket", "pnmarket.admin", SUPPORT_DISCORD);
-        updateChecker.start();
     }
 }

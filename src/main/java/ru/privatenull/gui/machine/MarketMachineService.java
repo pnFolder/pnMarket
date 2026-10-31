@@ -10,8 +10,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import ru.privatenull.PnMarketPlugin;
 import ru.privatenull.config.GuiConfig;
 import ru.privatenull.gui.MarketGuiLayout;
-import ru.privatenull.pnlibrary.gui.*;
-import ru.privatenull.pnlibrary.text.ColorUtil;
+import ru.privatenull.support.gui.*;
+import ru.privatenull.support.text.ColorUtil;
 
 import java.util.*;
 import java.util.function.Consumer;

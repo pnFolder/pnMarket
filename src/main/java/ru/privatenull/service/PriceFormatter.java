@@ -1,7 +1,7 @@
 package ru.privatenull.service;
 
 import ru.privatenull.PnMarketPlugin;
-import ru.privatenull.pnlibrary.text.ColorUtil;
+import ru.privatenull.support.text.ColorUtil;
 
 import java.math.*;
 

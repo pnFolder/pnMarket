@@ -6,7 +6,7 @@ authors: [ privatenull ]
 description: pnMarket - AuctionPlugin
 website: https://github.com/pnFolder/pnMarket
 depend: [ProtocolLib]
-softdepend: [Vault, PlayerPoints, ExcellentEconomy]
+softdepend: [pnLibrary, Vault, PlayerPoints, ExcellentEconomy]
 libraries:
   - org.xerial:sqlite-jdbc:3.46.1.3
 commands:

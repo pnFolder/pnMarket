@@ -6,7 +6,7 @@ import ru.privatenull.market.FavoriteFilter;
 import ru.privatenull.model.DeliveryEntry;
 import ru.privatenull.model.MarketListing;
 import ru.privatenull.model.PurchaseReservation;
-import ru.privatenull.pnlibrary.database.RedisDatabaseManager;
+import ru.privatenull.support.database.RedisDatabaseManager;
 
 import java.io.IOException;
 import java.util.*;

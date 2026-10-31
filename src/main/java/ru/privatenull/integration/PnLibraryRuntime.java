@@ -1,0 +1,136 @@
+package ru.privatenull.integration;
+
+import org.bukkit.plugin.java.JavaPlugin;
+import org.pnfolder.pnlibrary.api.diagnostics.DiagnosticConfiguration;
+import org.pnfolder.pnlibrary.api.diagnostics.DiagnosticContainer;
+import org.pnfolder.pnlibrary.api.plugin.ModuleContext;
+import org.pnfolder.pnlibrary.api.plugin.PluginRegistration;
+import org.pnfolder.pnlibrary.api.remote.PolicyErrorAction;
+import org.pnfolder.pnlibrary.api.remote.RemotePolicySettings;
+import org.pnfolder.pnlibrary.api.runtime.PnLibrary;
+import org.pnfolder.pnlibrary.api.runtime.PnLibraryIdentity;
+import org.pnfolder.pnlibrary.api.runtime.PnLibraryProvider;
+import org.pnfolder.pnlibrary.api.updates.UpdateChannel;
+import org.pnfolder.pnlibrary.api.updates.UpdateRegistration;
+import org.pnfolder.pnlibrary.api.updates.UpdateSnapshot;
+
+import java.util.Map;
+import java.util.logging.Level;
+
+/** Managed pnLibrary integration loaded only after the dependency is enabled. */
+public final class PnLibraryRuntime implements PnRuntime {
+
+    public static final String MINIMUM_VERSION = "0.0.1-dev.6";
+    private static final String MODULE_ID = "pnmarket";
+    private static final int BSTATS_PROJECT_ID = 32716;
+    private static final String POLICY_SOURCE =
+            "https://raw.githubusercontent.com/pnFolder/pnlibrary-policy/main/.pnlibrary/policies/PnMarketPolicy.java";
+    private static final String UPDATE_OWNER = "pnFolder";
+    private static final String UPDATE_REPOSITORY = "pnMarket";
+
+    private final JavaPlugin owner;
+    private final PnLibrary runtime;
+    private PluginRegistration registration;
+    private ModuleContext module;
+
+    private PnLibraryRuntime(JavaPlugin owner, PnLibrary runtime) {
+        this.owner = owner;
+        this.runtime = runtime;
+    }
+
+    public static PnRuntime connect(JavaPlugin owner) {
+        PnLibrary runtime = PnLibraryProvider.get();
+        if (!runtime.isAtLeastVersion(MINIMUM_VERSION)) {
+            throw new IllegalStateException("pnMarket требует pnLibrary " + MINIMUM_VERSION
+                    + " или новее, установлена " + runtime.getVersion());
+        }
+        return new PnLibraryRuntime(owner, runtime);
+    }
+
+    @Override
+    public void register(String storageType) {
+        if (registration != null) throw new IllegalStateException("pnMarket уже зарегистрирован в pnLibrary");
+        registration = runtime.getPlugins().register(owner);
+        try {
+            module = registration.registerModule(MODULE_ID, builder -> builder
+                    // A policy that cannot be checked (offline server, JRE without a compiler) never stops pnMarket;
+                    // only an explicit denial from the policy does.
+                    .remotePolicy(RemotePolicySettings.builder()
+                            .source(POLICY_SOURCE)
+                            .onError(PolicyErrorAction.KEEP_RUNNING)
+                            .support(PnLibraryIdentity.SUPPORT_URL)
+                            .build())
+                    .metrics(metrics -> metrics.bStats(BSTATS_PROJECT_ID))
+                    .diagnostics(owner.getDataFolder().toPath(), DiagnosticContainer.builder("pnmarket")
+                            .snapshot(() -> Map.<String, Object>of(
+                                    "version", owner.getDescription().getVersion(),
+                                    "storage", storageType))
+                            .configuration(DiagnosticConfiguration.builder("config.yml")
+                                    .secretKeyRegex("(?i).*(password|passwd|secret|token|uri|url|user(name)?)$")
+                                    .build())
+                            .build())
+                    .updates(UPDATE_OWNER, UPDATE_REPOSITORY, updater -> updater
+                            .channel(UpdateChannel.STABLE)
+                            .automaticDownload(false)
+                            .configurationBackup(owner.getDataFolder().toPath(),
+                                    "config.yml", "messages.yml", "gui.yml", "sounds.yml")
+                            .artifact("(?i)^pnMarket-[0-9].*\\.jar$", 17)));
+        } catch (RuntimeException failure) {
+            closeRegistration();
+            throw failure;
+        }
+    }
+
+    @Override
+    public void enabled(String storageType) {
+        if (module == null) return;
+        module.getLifecycle().enabled()
+                .ok("Хранилище", storageType)
+                .show();
+    }
+
+    @Override
+    public String updateStatus(String currentVersion) {
+        UpdateRegistration updates = module == null ? null : module.getUpdates();
+        if (updates == null) return "&7проверяется";
+        UpdateSnapshot snapshot = updates.getSnapshot();
+        return switch (snapshot.getState()) {
+            case CHECKING, DOWNLOADING -> "&7проверяется";
+            case UPDATE_AVAILABLE, UPDATE_STAGED -> {
+                String latest = snapshot.getLatestVersion();
+                yield "&eдоступно &f" + currentVersion + " &8→ &#D8DF9D"
+                        + (latest == null || latest.isBlank() ? "неизвестно" : latest);
+            }
+            case FAILED -> "&cпроверка недоступна";
+            case INCOMPATIBLE, BLOCKED -> "&eновая версия несовместима с сервером";
+            case FROZEN -> "&7обновления приостановлены";
+            case ROLLED_BACK -> "&7выполнен откат версии";
+            case UP_TO_DATE -> "&aактуальная версия";
+        };
+    }
+
+    @Override
+    public String supportUrl() {
+        return PnLibraryIdentity.SUPPORT_URL;
+    }
+
+    @Override
+    public void close() {
+        ModuleContext closing = module;
+        module = null;
+        if (closing != null && !closing.isClosed()) {
+            try {
+                closing.getLifecycle().disabled().show();
+            } catch (RuntimeException failure) {
+                owner.getLogger().log(Level.FINE, "Не удалось вывести сообщение об остановке pnMarket", failure);
+            }
+        }
+        closeRegistration();
+    }
+
+    private void closeRegistration() {
+        PluginRegistration closing = registration;
+        registration = null;
+        if (closing != null && !closing.isClosed()) closing.close();
+    }
+}

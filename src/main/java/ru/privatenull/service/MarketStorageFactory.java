@@ -1,7 +1,7 @@
 package ru.privatenull.service;
 
 import ru.privatenull.PnMarketPlugin;
-import ru.privatenull.pnlibrary.database.DatabaseRouter;
+import ru.privatenull.support.database.DatabaseRouter;
 import ru.privatenull.storage.*;
 
 /** Routes every pnMarket repository through one shared pnLibrary backend. */
