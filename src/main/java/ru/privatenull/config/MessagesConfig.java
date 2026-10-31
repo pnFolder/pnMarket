@@ -2,7 +2,7 @@ package ru.privatenull.config;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
-import ru.privatenull.pnlibrary.text.ColorUtil;
+import ru.privatenull.support.text.ColorUtil;
 
 import java.io.File;
 import java.io.InputStreamReader;

@@ -10,8 +10,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.kyori.adventure.text.format.TextDecoration;
-import ru.privatenull.pnlibrary.item.HeadUtil;
-import ru.privatenull.pnlibrary.text.ColorUtil;
+import ru.privatenull.support.item.HeadUtil;
+import ru.privatenull.support.text.ColorUtil;
 
 import java.io.File;
 import java.io.InputStreamReader;

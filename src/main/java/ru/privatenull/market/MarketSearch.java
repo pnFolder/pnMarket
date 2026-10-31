@@ -3,7 +3,7 @@ package ru.privatenull.market;
 import org.bukkit.ChatColor;
 import org.bukkit.inventory.ItemStack;
 import ru.privatenull.model.MarketListing;
-import ru.privatenull.pnlibrary.localization.ItemLocalization;
+import ru.privatenull.support.localization.ItemLocalization;
 import ru.privatenull.util.NumberParser;
 
 import java.util.ArrayList;
