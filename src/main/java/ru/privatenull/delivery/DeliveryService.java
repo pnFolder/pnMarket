@@ -1,5 +1,6 @@
 package ru.privatenull.delivery;
 
+import ru.privatenull.integration.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -99,7 +100,7 @@ public final class DeliveryService implements Listener, AutoCloseable {
                 });
             } catch (RuntimeException exception) {
                 claiming.removeAll(ids);
-                plugin.getLogger().warning("Не удалось выдать доставку: " + exception.getMessage());
+                Log.error("Не удалось выдать доставку", exception);
             }
         });
     }
@@ -176,7 +177,7 @@ public final class DeliveryService implements Listener, AutoCloseable {
                 });
             } catch (RuntimeException exception) {
                 claiming.remove(id);
-                plugin.getLogger().warning("Не удалось забрать доставку: " + exception.getMessage());
+                Log.error("Не удалось забрать доставку", exception);
             }
         });
     }

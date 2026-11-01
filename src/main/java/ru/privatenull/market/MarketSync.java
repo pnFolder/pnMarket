@@ -1,5 +1,6 @@
 package ru.privatenull.market;
 
+import ru.privatenull.integration.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 import ru.privatenull.PnMarketPlugin;
@@ -92,7 +93,7 @@ public final class MarketSync {
             snapshot = refreshed;
             queueRender();
         } catch (RuntimeException exception) {
-            plugin.getLogger().warning("Не удалось обновить кэш аукциона: " + exception.getMessage());
+            Log.error("Не удалось обновить кэш аукциона", exception);
         } finally {
             loading.set(false);
         }

@@ -1,5 +1,6 @@
 package ru.privatenull.config;
 
+import ru.privatenull.integration.Log;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -39,7 +40,7 @@ public final class SoundsConfig {
             player.playSound(player.getLocation(), sound, volume, pitch);
         } catch (IllegalArgumentException exception) {
             if (warned.add(path)) {
-                plugin.getLogger().warning("Неизвестный звук в sounds.yml, путь " + path + ": " + type);
+                Log.warning("Неизвестный звук в sounds.yml, путь " + path + ": " + type);
             }
         }
     }

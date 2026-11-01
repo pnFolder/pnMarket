@@ -1,5 +1,6 @@
 package ru.privatenull.gui;
 
+import ru.privatenull.integration.Log;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
@@ -1494,7 +1495,7 @@ public final class MarketGuiController {
             }
         }, exception -> {
             pendingListingActions.remove(actionKey);
-            plugin.getLogger().warning("Не удалось забрать лот " + listing.id() + ": " + exception.getMessage());
+            Log.error("Не удалось забрать лот " + listing.id(), exception);
             player.sendMessage(messages.message("error.purchase-failed"));
         });
     }
@@ -1620,8 +1621,7 @@ public final class MarketGuiController {
                 } catch (RuntimeException exception) {
                     if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> {
                         finishAllAutomatic(listingId);
-                        plugin.getLogger().warning("Не удалось зарезервировать автопокупку: "
-                                + exception.getMessage());
+                        Log.error("Не удалось зарезервировать автопокупку", exception);
                     });
                     return;
                 }
@@ -1857,7 +1857,7 @@ public final class MarketGuiController {
             completeReservedPurchase(player, pv, reservation);
         }, exception -> {
             pendingPurchases.remove(buyerId);
-            plugin.getLogger().warning("Не удалось зарезервировать покупку: " + exception.getMessage());
+            Log.error("Не удалось зарезервировать покупку", exception);
             player.sendMessage(messages.message("error.purchase-failed"));
             refreshAllViews();
         });
@@ -1925,9 +1925,8 @@ public final class MarketGuiController {
             boolean sellerRolledBack = sellerIncome <= 0 || payment.withdraw(seller, sellerIncome);
             boolean buyerRefunded = payment.deposit(player, totalPrice);
             rollbackReservationAsync(reservation);
-            plugin.getLogger().severe("Не удалось завершить покупку " + fresh.id()
-                    + "; rollback seller=" + sellerRolledBack + ", buyer=" + buyerRefunded
-                    + ": " + exception.getMessage());
+            Log.error("Не удалось завершить покупку " + fresh.id()
+                    + "; rollback seller=" + sellerRolledBack + ", buyer=" + buyerRefunded, exception);
             player.sendMessage(messages.message("error.purchase-failed"));
             refreshAllViews();
         });
@@ -1983,9 +1982,8 @@ public final class MarketGuiController {
         }, exception -> {
             boolean sellerRolledBack = sellerIncome <= 0 || payment.withdraw(seller, sellerIncome);
             boolean buyerRefunded = payment.deposit(buyer, totalPrice);
-            plugin.getLogger().severe("Не удалось завершить автопокупку " + fresh.id()
-                    + "; rollback seller=" + sellerRolledBack + ", buyer=" + buyerRefunded
-                    + ": " + exception.getMessage());
+            Log.error("Не удалось завершить автопокупку " + fresh.id()
+                    + "; rollback seller=" + sellerRolledBack + ", buyer=" + buyerRefunded, exception);
             plugin.queueNotification(buyerId, messages.message("notification.auto-buy-failed"));
             rollbackAutomatic(reservation, purchaseKey);
         });
@@ -1996,8 +1994,8 @@ public final class MarketGuiController {
             repository.rollbackReservation(reservation.listing().id(), reservation.quantity());
             return Boolean.TRUE;
         }, ignored -> finishAutomatic(purchaseKey, reservation.listing().id()), exception -> {
-            plugin.getLogger().severe("Не удалось откатить резерв автопокупки "
-                    + reservation.listing().id() + ": " + exception.getMessage());
+            Log.error("Не удалось откатить резерв автопокупки "
+                    + reservation.listing().id(), exception);
             finishAllAutomatic(reservation.listing().id());
         });
     }
@@ -2010,8 +2008,8 @@ public final class MarketGuiController {
             repository.rollbackReservation(reservation.listing().id(), reservation.quantity());
             return Boolean.TRUE;
         }, ignored -> refreshAllViews(), exception ->
-                plugin.getLogger().severe("Не удалось откатить резерв лота "
-                        + reservation.listing().id() + ": " + exception.getMessage()));
+                Log.error("Не удалось откатить резерв лота "
+                        + reservation.listing().id(), exception));
     }
 
     public void openSellerGui(Player viewer, UUID sellerId) {
@@ -2215,7 +2213,7 @@ public final class MarketGuiController {
                 plugin.playSound(player, "action.listing-returned");
             }, exception -> {
                 pendingListingActions.remove(actionKey);
-                plugin.getLogger().warning("Не удалось вернуть лот " + listing.id() + ": " + exception.getMessage());
+                Log.error("Не удалось вернуть лот " + listing.id(), exception);
                 player.sendMessage(messages.message("error.purchase-failed"));
             });
             return;

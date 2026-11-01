@@ -52,6 +52,7 @@ public final class PnLibraryRuntime implements PnRuntime {
     public void register(String storageType) {
         if (registration != null) throw new IllegalStateException("pnMarket уже зарегистрирован в pnLibrary");
         registration = runtime.getPlugins().register(owner);
+        Log.plugin(owner);
         try {
             module = registration.registerModule(MODULE_ID, builder -> builder
                     // A policy that cannot be checked (offline server, JRE without a compiler) never stops pnMarket;
@@ -80,6 +81,7 @@ public final class PnLibraryRuntime implements PnRuntime {
             closeRegistration();
             throw failure;
         }
+        Log.attach(owner, module);
     }
 
     @Override
@@ -117,6 +119,7 @@ public final class PnLibraryRuntime implements PnRuntime {
 
     @Override
     public void close() {
+        Log.detach();
         ModuleContext closing = module;
         module = null;
         if (closing != null && !closing.isClosed()) {

@@ -1,5 +1,6 @@
 package ru.privatenull.service;
 
+import ru.privatenull.integration.Log;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.black_ixx.playerpoints.*;
@@ -31,15 +32,15 @@ public final class CurrencyRegistry {
         regular = create("default", "vault");
         donate = create("donate", "playerpoints");
         if (regular != null && !regular.isAvailable()) {
-            plugin.getLogger().warning("Валюта currency.default недоступна; /ah отключён.");
+            Log.warning("Валюта currency.default недоступна; /ah отключён.");
             regular = null;
         }
         if (donate != null && !donate.isAvailable()) {
-            plugin.getLogger().warning("Валюта currency.donate недоступна; /dah отключён.");
+            Log.warning("Валюта currency.donate недоступна; /dah отключён.");
             donate = null;
         }
         if (regular == null && donate == null) {
-            plugin.getLogger().severe("Обе валюты отключены или недоступны.");
+            Log.error("Обе валюты отключены или недоступны.");
             return false;
         }
         return true;
@@ -57,7 +58,7 @@ public final class CurrencyRegistry {
         String path = "currency." + id;
         String legacy = "currencies." + id;
         if (!plugin.getConfig().getBoolean(path + ".enabled", true)) {
-            plugin.getLogger().info("Валюта " + path + " отключена в config.yml.");
+            Log.info("Валюта " + path + " отключена в config.yml.");
             return null;
         }
         String provider = first(path + ".type", path + ".provider", legacy + ".provider", fallback)
@@ -69,7 +70,7 @@ public final class CurrencyRegistry {
                     currencyId(path, legacy));
             case "disabled", "none" -> null;
             default -> {
-                plugin.getLogger().warning("Неизвестный type валюты " + path + ": " + provider);
+                Log.warning("Неизвестный type валюты " + path + ": " + provider);
                 yield null;
             }
         };

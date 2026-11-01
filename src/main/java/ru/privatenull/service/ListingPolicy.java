@@ -1,5 +1,6 @@
 package ru.privatenull.service;
 
+import ru.privatenull.integration.Log;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.entity.Player;
 import ru.privatenull.PnMarketPlugin;
@@ -54,7 +55,7 @@ public final class ListingPolicy {
             String value = permission.getPrimaryGroup(player);
             return value == null || value.isBlank() ? "default" : value.toLowerCase(Locale.ROOT);
         } catch (RuntimeException exception) {
-            plugin.getLogger().warning("Не удалось определить группу игрока: " + exception.getMessage());
+            Log.error("Не удалось определить группу игрока", exception);
             return "default";
         }
     }
@@ -64,7 +65,7 @@ public final class ListingPolicy {
             NumberParser.parseDurationMillis(value);
             return true;
         } catch (RuntimeException ignored) {
-            plugin.getLogger().warning("Пропущен некорректный срок лота: " + value);
+            Log.warning("Пропущен некорректный срок лота: " + value);
             return false;
         }
     }

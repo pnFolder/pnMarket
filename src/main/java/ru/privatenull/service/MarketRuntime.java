@@ -1,5 +1,6 @@
 package ru.privatenull.service;
 
+import ru.privatenull.integration.Log;
 import org.bukkit.entity.Player;
 import ru.privatenull.PnMarketPlugin;
 import ru.privatenull.config.*;
@@ -165,7 +166,7 @@ public final class MarketRuntime implements AutoCloseable {
             return storageFactory.open(donate);
         } catch (RuntimeException exception) {
             String name = donate ? "донат-аукциона" : "обычного аукциона";
-            plugin.getLogger().warning("Не удалось открыть хранилище " + name + ": " + exception.getMessage());
+            Log.error("Не удалось открыть хранилище " + name, exception);
             return null;
         }
     }

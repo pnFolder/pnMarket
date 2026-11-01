@@ -1,5 +1,6 @@
 package ru.privatenull.config;
 
+import ru.privatenull.integration.Log;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.privatenull.support.text.ColorUtil;
@@ -33,7 +34,7 @@ public final class MessagesConfig {
     public String message(String key, Map<String, ?> placeholders) {
         String value = config.getString(key);
         if (value == null) {
-            plugin.getLogger().warning("Отсутствует строка локализации messages.yml: " + key);
+            Log.warning("Отсутствует строка локализации messages.yml: " + key);
             value = "&c[pnMarket] &fMissing message: " + key;
         }
         return ColorUtil.colorize(replace(value, placeholders));
@@ -61,7 +62,7 @@ public final class MessagesConfig {
             config.options().copyDefaults(true);
             config.save(file);
         } catch (Exception exception) {
-            plugin.getLogger().warning("Не удалось дополнить messages.yml новыми строками: " + exception.getMessage());
+            Log.error("Не удалось дополнить messages.yml новыми строками", exception);
         }
     }
 

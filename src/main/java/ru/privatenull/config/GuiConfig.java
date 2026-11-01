@@ -1,5 +1,6 @@
 package ru.privatenull.config;
 
+import ru.privatenull.integration.Log;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -43,7 +44,7 @@ public final class GuiConfig {
             config.options().copyDefaults(true);
             config.save(file);
         } catch (Exception exception) {
-            plugin.getLogger().warning("Не удалось дополнить gui.yml новыми настройками: " + exception.getMessage());
+            Log.error("Не удалось дополнить gui.yml новыми настройками", exception);
         }
     }
 
@@ -60,7 +61,7 @@ public final class GuiConfig {
             config.save(file);
             return true;
         } catch (Exception exception) {
-            plugin.getLogger().warning("Не удалось сохранить gui.yml: " + exception.getMessage());
+            Log.error("Не удалось сохранить gui.yml", exception);
             return false;
         }
     }
@@ -166,7 +167,7 @@ public final class GuiConfig {
     public String text(String path, Map<String, ?> placeholders) {
         String value = config.getString(path);
         if (value == null) {
-            plugin.getLogger().warning("Отсутствует строка gui.yml: " + path);
+            Log.warning("Отсутствует строка gui.yml: " + path);
             value = "&cMissing GUI text: " + path;
         }
         return ColorUtil.colorize(replace(value, placeholders));

@@ -1,5 +1,6 @@
 package ru.privatenull.notification;
 
+import ru.privatenull.integration.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import ru.privatenull.PnMarketPlugin;
@@ -35,8 +36,7 @@ public final class PendingNotificationService implements AutoCloseable {
             try {
                 storage.queue(playerId, message);
             } catch (RuntimeException exception) {
-                plugin.getLogger().warning("Не удалось сохранить отложенное уведомление: "
-                        + exception.getMessage());
+                Log.error("Не удалось сохранить отложенное уведомление", exception);
             }
         });
     }
@@ -48,8 +48,7 @@ public final class PendingNotificationService implements AutoCloseable {
             try {
                 messages = storage.takeAll(playerId);
             } catch (RuntimeException exception) {
-                plugin.getLogger().warning("Не удалось получить отложенные уведомления: "
-                        + exception.getMessage());
+                Log.error("Не удалось получить отложенные уведомления", exception);
                 return;
             }
             if (messages.isEmpty()) return;

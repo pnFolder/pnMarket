@@ -1,5 +1,6 @@
 package ru.privatenull.service;
 
+import ru.privatenull.integration.Log;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -97,7 +98,7 @@ public final class ListingService {
             end(playerId, donate);
             restore(player, List.of(stored));
             refundCommission(player, payment, commission);
-            plugin.getLogger().warning("Не удалось создать лот: " + exception.getMessage());
+            Log.error("Не удалось создать лот", exception);
             reject(player, "error.serialization");
         });
     }
@@ -271,7 +272,7 @@ public final class ListingService {
             end(playerId, donate);
             restore(player, contents);
             refundCommission(player, payment, commission);
-            plugin.getLogger().warning("Не удалось создать лот-набор: " + exception.getMessage());
+            Log.error("Не удалось создать лот-набор", exception);
             reject(player, "error.serialization");
         });
         return true;
@@ -316,7 +317,7 @@ public final class ListingService {
         }, exception -> {
             end(player.getUniqueId(), donate);
             refundCommission(player, payment, commission);
-            plugin.getLogger().warning("Не удалось перевыставить лот " + listing.id() + ": " + exception.getMessage());
+            Log.error("Не удалось перевыставить лот " + listing.id(), exception);
             reject(player, "error.serialization");
         });
     }
@@ -332,7 +333,7 @@ public final class ListingService {
     private void refundCommission(Player player, MarketPayment payment, double commission) {
         if (commission <= 0) return;
         if (!payment.deposit(player, commission)) {
-            plugin.getLogger().severe("Не удалось вернуть комиссию " + commission + " игроку " + player.getName());
+            Log.error("Не удалось вернуть комиссию " + commission + " игроку " + player.getName());
         }
     }
 
@@ -356,7 +357,7 @@ public final class ListingService {
         try {
             return raw instanceof Number number ? number.doubleValue() : NumberParser.parse(String.valueOf(raw));
         } catch (NumberFormatException exception) {
-            plugin.getLogger().warning("Некорректный лимит цены " + path + ": " + raw);
+            Log.warning("Некорректный лимит цены " + path + ": " + raw);
             return fallback;
         }
     }

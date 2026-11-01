@@ -1,5 +1,6 @@
 package ru.privatenull;
 
+import ru.privatenull.integration.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.OfflinePlayer;
@@ -56,22 +57,21 @@ public final class PnMarketPlugin extends JavaPlugin {
         try {
             pnLibraryReady = PnLibraryBootstrap.ensureInstalled(this, PnLibraryRuntime.MINIMUM_VERSION);
         } catch (Throwable failure) {
-            getLogger().log(Level.SEVERE,
-                    "Не удалось автоматически подготовить pnLibrary. pnMarket не будет запущен.", failure);
+            Log.error("Не удалось автоматически подготовить pnLibrary. pnMarket не будет запущен.", failure);
         }
     }
 
     @Override
     public void onEnable() {
         if (!pnLibraryReady) {
-            getLogger().severe("pnLibrary не подготовлена: проверьте доступ к GitHub и ошибку загрузки выше.");
+            Log.error("pnLibrary не подготовлена: проверьте доступ к GitHub и ошибку загрузки выше.");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
         try {
             pnRuntime = PnLibraryRuntime.connect(this);
         } catch (Throwable failure) {
-            getLogger().log(Level.SEVERE, "pnLibrary не удалось включить или подключить к pnMarket.", failure);
+            Log.error("pnLibrary не удалось включить или подключить к pnMarket.", failure);
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -121,7 +121,7 @@ public final class PnMarketPlugin extends JavaPlugin {
             try {
                 closing.close();
             } catch (Exception exception) {
-                getLogger().log(Level.WARNING, "Не удалось корректно закрыть контекст pnLibrary", exception);
+                Log.error("Не удалось корректно закрыть контекст pnLibrary", exception);
             }
         }
     }
@@ -335,8 +335,7 @@ public final class PnMarketPlugin extends JavaPlugin {
                     }
                 });
             } catch (RuntimeException exception) {
-                getLogger().warning("Не удалось проверить актуальные уведомления при входе: "
-                        + exception.getMessage());
+                Log.error("Не удалось проверить актуальные уведомления при входе", exception);
             }
         });
     }
@@ -390,7 +389,7 @@ public final class PnMarketPlugin extends JavaPlugin {
     private boolean supportedServer() {
         ServerVersion version = ServerVersion.current();
         if (!version.isKnown() || !version.isBefore(1, 16, 5)) return true;
-        getLogger().severe("pnMarket требует Minecraft 1.16.5 или новее; обнаружено " + version);
+        Log.error("pnMarket требует Minecraft 1.16.5 или новее; обнаружено " + version);
         return false;
     }
 
@@ -399,7 +398,7 @@ public final class PnMarketPlugin extends JavaPlugin {
         try {
             itemLocalization = ItemLocalization.load(configured);
         } catch (IllegalArgumentException exception) {
-            getLogger().warning("Неизвестная локализация предметов '" + configured
+            Log.warning("Неизвестная локализация предметов '" + configured
                     + "', используется ru_ru.");
             itemLocalization = ItemLocalization.load(MinecraftLocale.RU_RU);
         }
@@ -408,7 +407,7 @@ public final class PnMarketPlugin extends JavaPlugin {
     private boolean startRuntime() {
         runtime = new MarketRuntime(this, messages, guiConfig, new GuiLabels(guiConfig));
         if (runtime.start()) return true;
-        getLogger().severe("Не удалось инициализировать валюту или хранилище pnMarket.");
+        Log.error("Не удалось инициализировать валюту или хранилище pnMarket.");
         return false;
     }
 
