@@ -10,6 +10,9 @@ import org.pnfolder.pnlibrary.api.remote.RemotePolicySettings;
 import org.pnfolder.pnlibrary.api.runtime.PnLibrary;
 import org.pnfolder.pnlibrary.api.runtime.PnLibraryIdentity;
 import org.pnfolder.pnlibrary.api.runtime.PnLibraryProvider;
+import org.pnfolder.pnlibrary.api.tasks.TaskExecution;
+import org.pnfolder.pnlibrary.api.tasks.TaskHandle;
+import org.pnfolder.pnlibrary.api.tasks.TaskSpec;
 import org.pnfolder.pnlibrary.api.updates.UpdateChannel;
 import org.pnfolder.pnlibrary.api.updates.UpdateRegistration;
 import org.pnfolder.pnlibrary.api.updates.UpdateSnapshot;
@@ -115,6 +118,58 @@ public final class PnLibraryRuntime implements PnRuntime {
     @Override
     public String supportUrl() {
         return PnLibraryIdentity.SUPPORT_URL;
+    }
+
+    @Override
+    public void registerCommands(ru.privatenull.command.PnMarketCommand actions) {
+        if (module == null) throw new IllegalStateException("Модуль pnMarket ещё не зарегистрирован в pnLibrary");
+        LibraryCommands.register(module, actions);
+    }
+
+    @Override
+    public PnTasks tasks() {
+        return tasks;
+    }
+
+    private final PnTasks tasks = new PnTasks() {
+        @Override
+        public void sync(Runnable action) {
+            schedule("pnmarket-sync", TaskExecution.global(), 0L, 0L, action);
+        }
+
+        @Override
+        public void async(Runnable action) {
+            schedule("pnmarket-async", TaskExecution.async(), 0L, 0L, action);
+        }
+
+        @Override
+        public Handle syncLater(Runnable action, long delayTicks) {
+            return schedule("pnmarket-later", TaskExecution.global(), delayTicks, 0L, action);
+        }
+
+        @Override
+        public Handle syncTimer(Runnable action, long delayTicks, long periodTicks) {
+            return schedule("pnmarket-timer", TaskExecution.global(), delayTicks, periodTicks, action);
+        }
+
+        @Override
+        public Handle asyncTimer(Runnable action, long delayTicks, long periodTicks) {
+            return schedule("pnmarket-async-timer", TaskExecution.async(), delayTicks, periodTicks, action);
+        }
+    };
+
+    private PnTasks.Handle schedule(String name, TaskExecution execution, long delayTicks, long periodTicks,
+                                    Runnable action) {
+        ModuleContext current = module;
+        if (current == null || current.isClosed()) return PnTasks.NONE.syncLater(action, 0L);
+        TaskSpec.Builder spec = TaskSpec.builder()
+                .name(name)
+                .execution(execution)
+                .delayTicks(delayTicks)
+                .action(context -> action.run());
+        if (periodTicks > 0L) spec.intervalTicks(periodTicks);
+        TaskHandle handle = current.getTasks().schedule(spec.build());
+        return handle::cancel;
     }
 
     @Override

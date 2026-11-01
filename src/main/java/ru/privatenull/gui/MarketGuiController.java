@@ -13,7 +13,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 import ru.privatenull.PnMarketPlugin;
@@ -1619,13 +1618,13 @@ public final class MarketGuiController {
                 try {
                     reservation = repository.reserve(listingId, 1).orElse(null);
                 } catch (RuntimeException exception) {
-                    if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (plugin.isEnabled()) plugin.tasks().sync(() -> {
                         finishAllAutomatic(listingId);
                         Log.error("Не удалось зарезервировать автопокупку", exception);
                     });
                     return;
                 }
-                if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> {
+                if (plugin.isEnabled()) plugin.tasks().sync(() -> {
                     if (reservation == null) finishAllAutomatic(listingId);
                     else completeAutomaticPurchase(request.buyerId(), request.purchaseKey(), reservation);
                 });
@@ -2109,15 +2108,12 @@ public final class MarketGuiController {
         hideAttributes(barrier);
         inv.setItem(slot, barrier);
         plugin.playSound(player, "error.no-money");
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                Player p = player;
-                if (p == null || !p.isOnline()) return;
-                if (!p.getOpenInventory().getTopInventory().equals(inv)) return;
-                fillAuctionInventory(p, view);
-            }
-        }.runTaskLater(plugin, 40L);
+        plugin.tasks().syncLater(() -> {
+            Player p = player;
+            if (p == null || !p.isOnline()) return;
+            if (!p.getOpenInventory().getTopInventory().equals(inv)) return;
+            fillAuctionInventory(p, view);
+        }, 40L);
     }
 
     void handleAuctionClick(Player player, AuctionView view, int slot, boolean leftClick, boolean rightClick) {
@@ -2290,17 +2286,17 @@ public final class MarketGuiController {
 
     private <T> void storageAsync(Callable<T> operation, Consumer<T> success,
                                   Consumer<Throwable> failure) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.tasks().async(() -> {
             T result;
             try {
                 result = operation.call();
             } catch (Throwable throwable) {
                 if (plugin.isEnabled()) {
-                    Bukkit.getScheduler().runTask(plugin, () -> failure.accept(throwable));
+                    plugin.tasks().sync(() -> failure.accept(throwable));
                 }
                 return;
             }
-            if (plugin.isEnabled()) Bukkit.getScheduler().runTask(plugin, () -> success.accept(result));
+            if (plugin.isEnabled()) plugin.tasks().sync(() -> success.accept(result));
         });
     }
 }

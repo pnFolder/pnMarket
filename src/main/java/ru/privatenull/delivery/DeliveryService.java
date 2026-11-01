@@ -60,7 +60,7 @@ public final class DeliveryService implements Listener, AutoCloseable {
     public void deliverFitting(Player player) {
         submit(() -> {
             List<DeliveryEntry> entries = storage.find(player.getUniqueId());
-            Bukkit.getScheduler().runTask(plugin, () -> deliverFitting(player, entries));
+            plugin.tasks().sync(() -> deliverFitting(player, entries));
         });
     }
 
@@ -81,7 +81,7 @@ public final class DeliveryService implements Listener, AutoCloseable {
         submit(() -> {
             try {
                 storage.delete(player.getUniqueId(), ids);
-                Bukkit.getScheduler().runTask(plugin, () -> {
+                plugin.tasks().sync(() -> {
                     if (!player.isOnline()) {
                         claiming.removeAll(ids);
                         submit(() -> storage.store(player.getUniqueId(),
@@ -108,7 +108,7 @@ public final class DeliveryService implements Listener, AutoCloseable {
     private void load(Player player, int requestedPage, boolean open, int sourceSlot) {
         submit(() -> {
             List<DeliveryEntry> entries = storage.find(player.getUniqueId());
-            Bukkit.getScheduler().runTask(plugin, () -> render(player, entries, requestedPage, open, sourceSlot));
+            plugin.tasks().sync(() -> render(player, entries, requestedPage, open, sourceSlot));
         });
     }
 
@@ -163,7 +163,7 @@ public final class DeliveryService implements Listener, AutoCloseable {
         submit(() -> {
             try {
                 storage.delete(player.getUniqueId(), id);
-                Bukkit.getScheduler().runTask(plugin, () -> {
+                plugin.tasks().sync(() -> {
                     if (!player.isOnline()) {
                         claiming.remove(id);
                         submit(() -> storage.store(player.getUniqueId(), List.of(item)));

@@ -14,6 +14,12 @@ public interface PnRuntime extends AutoCloseable {
 
     String supportUrl();
 
+    /** Registers the /pnmarket command on the pnLibrary command tree. */
+    void registerCommands(ru.privatenull.command.PnMarketCommand actions);
+
+    /** Task scheduler of the pnMarket module. */
+    PnTasks tasks();
+
     @Override
     void close();
 }

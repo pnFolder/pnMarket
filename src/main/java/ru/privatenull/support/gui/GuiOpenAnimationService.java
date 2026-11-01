@@ -4,7 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
+import ru.privatenull.integration.PnTasks;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -91,7 +91,7 @@ public final class GuiOpenAnimationService {
 
         tasks.put(playerId, animation);
         try {
-            animation.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            animation.task = ru.privatenull.PnMarketPlugin.tasksOf(plugin).syncTimer(() -> {
                 if (tasks.get(playerId) != animation) {
                     cancelTask(animation);
                     return;
@@ -263,7 +263,7 @@ public final class GuiOpenAnimationService {
         private final int visibleTitleLength;
         private int cursor;
         private int titleCursor;
-        private BukkitTask task;
+        private PnTasks.Handle task;
 
         private OpeningAnimation(Inventory inventory, List<SlotItem> items, String title, boolean animateTitle) {
             this.inventory = inventory;

@@ -41,7 +41,7 @@ public final class AutoBuyPriceInputService implements Listener {
         if (input == null) return;
         event.setCancelled(true);
         String raw = event.getMessage().trim();
-        Bukkit.getScheduler().runTask(plugin, () -> apply(event.getPlayer(), input, raw));
+        plugin.tasks().sync(() -> apply(event.getPlayer(), input, raw));
     }
 
     @EventHandler

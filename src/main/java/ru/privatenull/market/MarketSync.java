@@ -1,8 +1,8 @@
 package ru.privatenull.market;
 
+import ru.privatenull.integration.PnTasks;
 import ru.privatenull.integration.Log;
 import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitTask;
 import ru.privatenull.PnMarketPlugin;
 import ru.privatenull.model.MarketListing;
 import ru.privatenull.model.MarketSnapshot;
@@ -22,16 +22,16 @@ public final class MarketSync {
     private final AtomicBoolean renderQueued = new AtomicBoolean();
     private final AtomicLong snapshotRevision = new AtomicLong();
     private volatile MarketSnapshot snapshot = MarketSnapshot.empty();
-    private BukkitTask task;
+    private PnTasks.Handle task;
 
     public MarketSync(PnMarketPlugin plugin, MarketStorage repository) {
         this.plugin = plugin;
         this.repository = repository;
-        task = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::refreshNow, 1L, 40L);
+        task = plugin.tasks().asyncTimer(this::refreshNow, 1L, 40L);
     }
 
     public void refreshAsync() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, this::refreshNow);
+        plugin.tasks().async(this::refreshNow);
     }
 
     public List<MarketListing> all() {
@@ -103,7 +103,7 @@ public final class MarketSync {
         if (!plugin.isEnabled()) return;
         if (!renderQueued.compareAndSet(false, true)) return;
         try {
-            Bukkit.getScheduler().runTask(plugin, () -> {
+            plugin.tasks().sync(() -> {
                 try {
                     plugin.renderAllViews();
                 } finally {

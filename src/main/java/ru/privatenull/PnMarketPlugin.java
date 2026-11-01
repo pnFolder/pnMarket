@@ -1,6 +1,7 @@
 package ru.privatenull;
 
 import ru.privatenull.integration.Log;
+import ru.privatenull.integration.PnTasks;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.OfflinePlayer;
@@ -77,6 +78,9 @@ public final class PnMarketPlugin extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(new PnLibraryLifecycleListener(this), this);
         saveDefaultConfig();
+        String storageType = getConfig().getString("storage.type", "sqlite");
+        // The module is registered first: services started below schedule their tasks through it.
+        pnRuntime.register(storageType);
         messages = new MessagesConfig(this);
         guiConfig = new GuiConfig(this);
         sounds = new SoundsConfig(this);
@@ -102,8 +106,6 @@ public final class PnMarketPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MarketInventoryListener(this), this);
         machine = new MarketMachineService(this);
         getServer().getPluginManager().registerEvents(machine, this);
-        String storageType = getConfig().getString("storage.type", "sqlite");
-        pnRuntime.register(storageType);
         pnRuntime.enabled(storageType);
     }
 
@@ -124,6 +126,15 @@ public final class PnMarketPlugin extends JavaPlugin {
                 Log.error("Не удалось корректно закрыть контекст pnLibrary", exception);
             }
         }
+    }
+
+    public PnTasks tasks() {
+        PnRuntime current = pnRuntime;
+        return current == null ? PnTasks.NONE : current.tasks();
+    }
+
+    public static PnTasks tasksOf(org.bukkit.plugin.Plugin plugin) {
+        return ((PnMarketPlugin) plugin).tasks();
     }
 
     public void reloadRuntime() {
@@ -322,14 +333,14 @@ public final class PnMarketPlugin extends JavaPlugin {
         notificationOfflineSince.remove(player.getUniqueId());
         if (runtime == null || runtime.favorites() == null || offlineSince <= 0) return;
 
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+        this.tasks().async(() -> {
             try {
                 long now = System.currentTimeMillis();
                 List<MarketListing> regular = runtime.storage(false) == null
                         ? List.of() : runtime.storage(false).findActiveCreatedAfter(offlineSince, now);
                 List<MarketListing> donate = runtime.storage(true) == null
                         ? List.of() : runtime.storage(true).findActiveCreatedAfter(offlineSince, now);
-                Bukkit.getScheduler().runTask(this, () -> {
+                this.tasks().sync(() -> {
                     if (player.isOnline()) {
                         runtime.favorites().notifyAvailable(player, offlineSince, regular, donate);
                     }
@@ -414,10 +425,7 @@ public final class PnMarketPlugin extends JavaPlugin {
     private void registerCommands() {
         register("ah", false);
         register("dah", true);
-        var command = Objects.requireNonNull(getCommand("pnmarket"),
-                "Команда pnmarket отсутствует в plugin.yml");
-        command.setExecutor(new PnMarketCommand(this));
-        command.setTabCompleter(new PnMarketTabCompleter());
+        pnRuntime.registerCommands(new PnMarketCommand(this));
     }
 
     private void register(String name, boolean donate) {

@@ -4,7 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -81,21 +80,17 @@ class JoinNotificationsTest {
         when(runtime.storage(true)).thenReturn(donate);
         when(runtime.favorites()).thenReturn(favorites);
         setField("runtime", runtime);
-        BukkitScheduler scheduler = mock(BukkitScheduler.class);
-        doAnswer(invocation -> {
-            invocation.getArgument(1, Runnable.class).run();
-            return null;
-        }).when(scheduler).runTaskAsynchronously(eq(plugin), any(Runnable.class));
-        doAnswer(invocation -> {
-            invocation.getArgument(1, Runnable.class).run();
-            return null;
-        }).when(scheduler).runTask(eq(plugin), any(Runnable.class));
+        ru.privatenull.integration.PnTasks immediate = new ru.privatenull.integration.PnTasks() {
+            @Override public void sync(Runnable action) { action.run(); }
+            @Override public void async(Runnable action) { action.run(); }
+            @Override public Handle syncLater(Runnable action, long delayTicks) { action.run(); return () -> { }; }
+            @Override public Handle syncTimer(Runnable action, long delayTicks, long periodTicks) { return () -> { }; }
+            @Override public Handle asyncTimer(Runnable action, long delayTicks, long periodTicks) { return () -> { }; }
+        };
+        when(plugin.tasks()).thenReturn(immediate);
 
-        try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
-            bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
-            plugin.prepareJoinNotifications(joiningPlayer);
-            plugin.notifyOnJoin(joiningPlayer);
-        }
+        plugin.prepareJoinNotifications(joiningPlayer);
+        plugin.notifyOnJoin(joiningPlayer);
 
         verify(regular).findActiveCreatedAfter(eq(10_000L), anyLong());
         verify(donate).findActiveCreatedAfter(eq(10_000L), anyLong());

@@ -77,7 +77,7 @@ public final class DatabaseExecutor implements AutoCloseable {
                 if (throwable == null) success.accept(value);
                 else failure.accept(unwrap(throwable));
             };
-            if (plugin.isEnabled()) plugin.getServer().getScheduler().runTask(plugin, completion);
+            if (plugin.isEnabled()) ru.privatenull.PnMarketPlugin.tasksOf(plugin).sync(completion);
         });
     }
 

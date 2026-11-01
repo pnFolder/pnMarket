@@ -423,12 +423,12 @@ public final class ListingService {
     }
 
     private <T> void async(Callable<T> operation, Consumer<T> success, Consumer<Throwable> failure) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+        plugin.tasks().async(() -> {
             try {
                 T result = operation.call();
-                if (plugin.isEnabled()) plugin.getServer().getScheduler().runTask(plugin, () -> success.accept(result));
+                if (plugin.isEnabled()) plugin.tasks().sync(() -> success.accept(result));
             } catch (Throwable throwable) {
-                if (plugin.isEnabled()) plugin.getServer().getScheduler().runTask(plugin, () -> failure.accept(throwable));
+                if (plugin.isEnabled()) plugin.tasks().sync(() -> failure.accept(throwable));
             }
         });
     }

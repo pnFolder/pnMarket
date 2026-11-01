@@ -53,7 +53,7 @@ public final class PendingNotificationService implements AutoCloseable {
             }
             if (messages.isEmpty()) return;
             try {
-                Bukkit.getScheduler().runTask(plugin, () -> deliver(player, messages));
+                plugin.tasks().sync(() -> deliver(player, messages));
             } catch (RuntimeException exception) {
                 requeue(playerId, messages);
             }
