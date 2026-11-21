@@ -6,7 +6,7 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.pnfolder.pnlibrary.api.text.ComponentSerializerType;
+import org.pnfolder.pnlibrary.api.text.serializer.ComponentSerializerType;
 import org.pnfolder.pnlibrary.api.text.ComponentService;
 
 import java.util.Map;

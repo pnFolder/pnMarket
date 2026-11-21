@@ -32,6 +32,23 @@ jobs:
           java-version: '17'
           cache: gradle
 
+      - name: Read pnLibrary version
+        id: pnlibrary
+        run: echo "version=$(grep -m1 "^def pnLibraryVersion" build.gradle | cut -d"'" -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pnLibrary
+        uses: actions/checkout@v4
+        with:
+          repository: pnFolder/pnLibrary
+          ref: v${{ steps.pnlibrary.outputs.version }}
+          path: pnLibrary
+
+      - name: Publish pnLibrary to Maven Local
+        working-directory: pnLibrary
+        run: |
+          chmod +x gradlew
+          JAVA_HOME="$JAVA_HOME_21_X64" ./gradlew publishToMavenLocal --no-daemon --no-build-cache
+
       - name: Make Gradle executable
         run: chmod +x gradlew
 
