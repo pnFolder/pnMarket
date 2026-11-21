@@ -3,6 +3,29 @@
   "product": "pnmarket",
   "releases": [
     {
+      "version": "1.2.5",
+      "channel": "stable",
+      "description": "Переход на pnLibrary 0.1.0-dev.6 (API 2): нужна новая библиотека.",
+      "changelogUrl": "https://github.com/PnFolder/pnMarket/blob/main/.pnlibrary/changelogs/1.2.5.md",
+      "publishedAt": "2026-11-21T15:42:05Z",
+      "api": {
+        "minimum": 2,
+        "maximum": 2
+      },
+      "artifacts": [
+        {
+          "file": "pnMarket-1.2.5-paper-mc1.16.5-java17.jar",
+          "platform": "BUKKIT",
+          "java": {
+            "minimum": 17
+          },
+          "url": "https://github.com/PnFolder/pnMarket/releases/download/v1.2.5/pnMarket-1.2.5-paper-mc1.16.5-java17.jar",
+          "sha256": "76cee606e22c531ec4aedce744ccf49d1ee787c55f579668a469ad0571bb28eb",
+          "size": 2645468
+        }
+      ]
+    },
+    {
       "version": "1.2.2",
       "channel": "stable",
       "description": "Исправления окон аукциона на Paper 1.16.5, меньший размер плагина (драйверы баз скачиваются сервером), новая ссылка поддержки.",
