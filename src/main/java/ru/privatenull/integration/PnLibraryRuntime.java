@@ -23,7 +23,7 @@ import java.util.logging.Level;
 /** Managed pnLibrary integration loaded only after the dependency is enabled. */
 public final class PnLibraryRuntime implements PnRuntime {
 
-    public static final String MINIMUM_VERSION = "0.0.1-dev.6";
+    public static final String MINIMUM_VERSION = "0.1.0-dev.6";
     private static final String MODULE_ID = "pnmarket";
     private static final int BSTATS_PROJECT_ID = 32716;
     private static final String FASTSTATS_TOKEN = "1f89459f95c33fecc6f6829ffe65ff61";
