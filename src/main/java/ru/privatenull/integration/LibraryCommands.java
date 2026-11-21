@@ -2,10 +2,10 @@ package ru.privatenull.integration;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
-import org.pnfolder.pnlibrary.api.commands.ArgumentType;
+import org.pnfolder.pnlibrary.api.commands.definition.ArgumentType;
 import org.pnfolder.pnlibrary.api.commands.CommandContext;
-import org.pnfolder.pnlibrary.api.commands.CommandDefinition;
-import org.pnfolder.pnlibrary.api.commands.NoPermission;
+import org.pnfolder.pnlibrary.api.commands.definition.CommandDefinition;
+import org.pnfolder.pnlibrary.api.commands.error.NoPermission;
 import org.pnfolder.pnlibrary.api.plugin.ModuleContext;
 import ru.privatenull.command.PnMarketCommand;
 
